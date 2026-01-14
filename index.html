@@ -90,7 +90,7 @@
     <div class="w-64 bg-gray-800 text-white flex flex-col border-l border-gray-700 shadow-xl z-10 overflow-y-auto">
         <div class="p-4 border-b border-gray-700 bg-gray-900">
             <h1 class="text-xl font-bold text-blue-400">שרטוט מכונות</h1>
-            <p class="text-xs text-gray-400 mt-1">גרסה 2.0 (מאובטח)</p>
+            <p class="text-xs text-gray-400 mt-1">גרסה 2.2 (ייבוא)</p>
         </div>
 
         <!-- כלים ראשיים -->
@@ -115,6 +115,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span class="text-xs mt-1">קו</span>
             </button>
+            <button onclick="setTool('line-dashed')" id="btn-line-dashed" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" stroke-dasharray="4 4"/></svg>
+                <span class="text-xs mt-1">קו מקווקו</span>
+            </button>
             <button onclick="setTool('arrow')" id="btn-arrow" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 <span class="text-xs mt-1">חץ</span>
@@ -122,6 +126,10 @@
             <button onclick="setTool('double-arrow')" id="btn-double-arrow" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/><polyline points="12 19 5 12 12 5"/></svg>
                 <span class="text-xs mt-1">חץ דו"צ</span>
+            </button>
+            <button onclick="setTool('compass')" id="btn-compass" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700 text-red-300 border-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="m12 14 7 7"/><path d="m12 14-7 7"/><path d="m12 10 0-8"/></svg>
+                <span class="text-xs mt-1">מחוגה</span>
             </button>
             <button onclick="setTool('text')" id="btn-text" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
@@ -173,6 +181,15 @@
                 <input type="range" id="prop-rotation" min="0" max="360" step="1" class="w-full" oninput="updateSelectedProp('rotation', this.value)">
             </div>
 
+            <!-- זווית מחוגה -->
+            <div id="prop-group-angle" class="mb-3 hidden">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>מפתח זווית</span>
+                    <span id="val-angleSpan">60°</span>
+                </div>
+                <input type="range" id="prop-angleSpan" min="0" max="360" step="1" class="w-full" oninput="updateSelectedProp('angleSpan', this.value)">
+            </div>
+
             <!-- שקיפות -->
             <div class="mb-3">
                 <div class="flex justify-between text-xs text-gray-400 mb-1">
@@ -213,6 +230,12 @@
         </div>
 
         <div class="mt-auto p-4 border-t border-gray-700 space-y-2">
+            <!-- כפתור ייבוא (נסתר) -->
+            <input type="file" id="file-input" accept=".html" style="display: none;" onchange="handleFileSelect(event)">
+            <button onclick="document.getElementById('file-input').click()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                ייבוא פרויקט
+            </button>
             <button onclick="saveProject()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 שמור פרויקט
@@ -348,6 +371,7 @@
                 if (shape.scale === undefined) shape.scale = 1;
                 if (shape.depth === undefined) shape.depth = 0;
                 if (shape.fillOpacity === undefined) shape.fillOpacity = 0;
+                if (shape.angleSpan === undefined) shape.angleSpan = 60; // ברירת מחדל למחוגה
                 return shape;
             });
         }
@@ -374,6 +398,7 @@
                 this.scale = 1;    // קנה מידה
                 this.depth = 0;    // עומק (צל)
                 this.fillOpacity = 0; // שקיפות מילוי (0-1)
+                this.angleSpan = 60; // מפתח זווית למחוגה
                 this.color = color;
                 this.selected = false;
             }
@@ -386,11 +411,11 @@
                 
                 let bx = 0, by = 0, bw = w, bh = h;
                 
-                if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear') {
+                if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear' || this.type === 'compass') {
                     bx = -w; by = -w; bw = w * 2; bh = w * 2;
                 } else if (this.type === 'text') {
                     by = -h; 
-                } else if (this.type === 'line' || this.type === 'arrow' || this.type === 'double-arrow') {
+                } else if (this.type === 'line' || this.type === 'line-dashed' || this.type === 'arrow' || this.type === 'double-arrow') {
                     by = -5 * this.scale / state.scale;
                     bh = 10 * this.scale / state.scale;
                 }
@@ -495,7 +520,7 @@
                 const w = this.width * s;
                 const h = this.height * s;
 
-                if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear') {
+                if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear' || this.type === 'compass') {
                     return Math.sqrt(lx*lx + ly*ly) <= Math.abs(w) + tolerance;
                 } 
                 else if (this.type === 'rect' || this.type === 'pipe' || this.type === 'pipe-transparent' || this.type === 'weight' || this.type === 'triangle') {
@@ -506,7 +531,7 @@
                     const textW = ctx.measureText(this.text || "טקסט").width;
                     return (lx >= -tolerance && lx <= textW + tolerance && ly >= -h - tolerance && ly <= tolerance);
                 }
-                else if (this.type === 'line' || this.type === 'arrow' || this.type === 'double-arrow') {
+                else if (this.type === 'line' || this.type === 'line-dashed' || this.type === 'arrow' || this.type === 'double-arrow') {
                     return (lx >= -tolerance && lx <= w + tolerance && Math.abs(ly) <= tolerance);
                 }
                 return false;
@@ -668,11 +693,38 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
+            else if (shape.type === 'compass') {
+                const angleSpanRad = (shape.angleSpan || 60) * Math.PI / 180;
+                const r = Math.abs(shape.width);
+                
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(0, 0); // מרכז
+                // קשת
+                ctx.arc(0, 0, r, 0, angleSpanRad);
+                ctx.lineTo(0, 0); // חזרה למרכז
+                ctx.fill();
+                ctx.stroke();
+                
+                // ציון מרכז קטן
+                ctx.beginPath();
+                ctx.fillStyle = shape.color;
+                ctx.arc(0, 0, 3/s, 0, Math.PI*2);
+                ctx.fill();
+            }
             else if (shape.type === 'line') {
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.lineTo(shape.width, shape.height);
                 ctx.stroke();
+            }
+            else if (shape.type === 'line-dashed') {
+                ctx.setLineDash([10, 10]); // הגדרת קווקוו
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(shape.width, shape.height);
+                ctx.stroke();
+                ctx.setLineDash([]); // איפוס קווקוו
             }
             else if (shape.type === 'arrow') {
                 ctx.fillStyle = fillColor;
@@ -937,6 +989,38 @@
             draw();
         });
 
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                // חיפוש תבנית הנתונים בקובץ
+                const regex = /const savedData = (\[.*?\]);/s; 
+                const match = content.match(regex);
+                
+                if (match && match[1]) {
+                    try {
+                        const json = JSON.parse(match[1]);
+                        state.shapes = rehydrateShapes(json);
+                        state.selectedId = null;
+                        document.getElementById('properties-panel').classList.add('hidden');
+                        draw();
+                        saveHistory();
+                        alert("הפרויקט נטען בהצלחה!");
+                    } catch (err) {
+                        console.error(err);
+                        alert("שגיאה בטעינת הקובץ: נתונים לא תקינים.");
+                    }
+                } else {
+                    alert("לא נמצאו נתוני שרטוט בקובץ זה.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
         function rehydrateShapes(plainShapes) {
             return plainShapes.map(s => {
                 const shape = new Shape(s.type, s.x, s.y, s.color);
@@ -944,6 +1028,7 @@
                 if (shape.scale === undefined) shape.scale = 1;
                 if (shape.depth === undefined) shape.depth = 0;
                 if (shape.fillOpacity === undefined) shape.fillOpacity = 0;
+                if (shape.angleSpan === undefined) shape.angleSpan = 60;
                 return shape;
             });
         }
@@ -1058,12 +1143,12 @@
                     const dx = pos.x - state.startX;
                     const dy = pos.y - state.startY;
                     
-                    if (state.tool === 'rect' || state.tool === 'pipe' || state.tool === 'weight' || state.tool === 'triangle') {
+                    if (state.tool === 'rect' || state.tool === 'pipe' || state.tool === 'pipe-transparent' || state.tool === 'weight' || state.tool === 'triangle') {
                         state.tempShape.width = dx;
                         state.tempShape.height = dy;
-                    } else if (state.tool === 'circle' || state.tool === 'circle-transparent' || state.tool === 'gear') {
+                    } else if (state.tool === 'circle' || state.tool === 'circle-transparent' || state.tool === 'gear' || state.tool === 'compass') {
                         state.tempShape.width = Math.sqrt(dx*dx + dy*dy);
-                    } else if (state.tool === 'line' || state.tool === 'arrow' || state.tool === 'double-arrow') {
+                    } else if (state.tool === 'line' || state.tool === 'line-dashed' || state.tool === 'arrow' || state.tool === 'double-arrow') {
                         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
                         const len = Math.sqrt(dx*dx + dy*dy);
                         state.tempShape.rotation = angle;
@@ -1088,7 +1173,7 @@
                 let historyNeeded = false;
 
                 if (state.tempShape) {
-                    if (state.tempShape.type === 'rect' || state.tempShape.type === 'pipe' || state.tempShape.type === 'weight' || state.tempShape.type === 'triangle') {
+                    if (state.tempShape.type === 'rect' || state.tempShape.type === 'pipe' || state.tempShape.type === 'pipe-transparent' || state.tempShape.type === 'weight' || state.tempShape.type === 'triangle') {
                         if (state.tempShape.width < 0) {
                             state.tempShape.x += state.tempShape.width;
                             state.tempShape.width = Math.abs(state.tempShape.width);
@@ -1098,7 +1183,7 @@
                             state.tempShape.height = Math.abs(state.tempShape.height);
                         }
                     }
-                    if (state.tempShape.type === 'pipe' && state.tempShape.height < 10) state.tempShape.height = 20;
+                    if ((state.tempShape.type === 'pipe' || state.tempShape.type === 'pipe-transparent') && state.tempShape.height < 10) state.tempShape.height = 20;
 
                     state.shapes.push(state.tempShape);
                     state.tempShape = null;
@@ -1207,6 +1292,15 @@
 
             document.getElementById('prop-opacity').value = shape.fillOpacity || 0;
             document.getElementById('val-opacity').innerText = Math.round((shape.fillOpacity || 0) * 100) + "%";
+
+            // הצגת בקר זווית למחוגה
+            if (shape.type === 'compass') {
+                document.getElementById('prop-group-angle').classList.remove('hidden');
+                document.getElementById('prop-angleSpan').value = shape.angleSpan || 60;
+                document.getElementById('val-angleSpan').innerText = (shape.angleSpan || 60) + "°";
+            } else {
+                document.getElementById('prop-group-angle').classList.add('hidden');
+            }
         }
 
         function updateSelectedProp(prop, value) {
@@ -1233,6 +1327,10 @@
                 if (prop === 'opacity') {
                     shape.fillOpacity = parseFloat(value);
                     document.getElementById('val-opacity').innerText = Math.round(value * 100) + "%";
+                }
+                if (prop === 'angleSpan') {
+                    shape.angleSpan = parseFloat(value);
+                    document.getElementById('val-angleSpan').innerText = value + "°";
                 }
                 
                 saveHistory(); 
