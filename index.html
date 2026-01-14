@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שרטוט הנדסי מכני</title>
+    
+    <!-- ספריות חיצוניות -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- הוספת ספריית docx לייצוא -->
     <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+
+    <!-- ========================================== -->
+    <!-- חלק 1: CSS - עיצוב וסגנון               -->
+    <!-- ========================================== -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
         
@@ -57,6 +62,10 @@
 </head>
 <body class="flex h-screen text-gray-800">
 
+    <!-- ========================================== -->
+    <!-- חלק 2: HTML - מבנה הממשק               -->
+    <!-- ========================================== -->
+
     <!-- חלון כניסה (Login Overlay) -->
     <div id="login-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md w-full border-t-4 border-blue-500">
@@ -90,11 +99,11 @@
     <div class="w-64 bg-gray-800 text-white flex flex-col border-l border-gray-700 shadow-xl z-10 overflow-y-auto">
         <div class="p-4 border-b border-gray-700 bg-gray-900">
             <h1 class="text-xl font-bold text-blue-400">שרטוט מכונות</h1>
-            <p class="text-xs text-gray-400 mt-1">גרסה 2.2 (ייבוא)</p>
+            <p class="text-xs text-gray-400 mt-1">גרסה 2.9 (מתוקן)</p>
         </div>
 
         <!-- כלים ראשיים -->
-        <div class="p-4 grid grid-cols-2 gap-2">
+        <div class="p-4 grid grid-cols-2 gap-2 border-b border-gray-700">
             <button onclick="setTool('select')" id="btn-select" class="tool-btn active flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700" title="בחירה ועריכה">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
                 <span class="text-xs mt-1">בחירה</span>
@@ -148,6 +157,35 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20h12"/><path d="M12 10v10"/><path d="M12 10a4 4 0 0 1 0-8 4 4 0 0 1 0 8z"/><rect x="6" y="10" width="12" height="10" rx="1"/></svg>
                 <span class="text-xs mt-1">משקולת</span>
             </button>
+        </div>
+
+        <!-- הגדרות דף -->
+        <div class="p-4 border-b border-gray-700">
+            <h3 class="text-sm font-bold mb-2 text-gray-300">הגדרות דף</h3>
+            <div class="flex items-center gap-2 mb-3">
+                <input type="checkbox" id="chk-show-page" onchange="togglePageBounds(this.checked)" class="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                <label for="chk-show-page" class="text-xs cursor-pointer select-none">הגבל לגודל דף</label>
+            </div>
+            
+            <div id="page-dims" class="grid grid-cols-2 gap-2 opacity-50 pointer-events-none transition-opacity mb-2">
+                <div>
+                    <label class="text-[10px] text-gray-400 block mb-1">רוחב (px)</label>
+                    <input type="number" id="page-width" value="1000" class="prop-input text-center" onchange="updatePageSize()">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 block mb-1">גובה (px)</label>
+                    <input type="number" id="page-height" value="800" class="prop-input text-center" onchange="updatePageSize()">
+                </div>
+            </div>
+
+            <!-- הגדרת קנה מידה לסרגל -->
+            <div>
+                <label class="text-[10px] text-gray-400 block mb-1">קנה מידה בסרגל (מכפיל)</label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="ruler-scale-input" value="1" step="0.01" class="prop-input text-center" onchange="updateRulerScale(this.value)">
+                    <span class="text-[10px] text-gray-500">x</span>
+                </div>
+            </div>
         </div>
 
         <!-- מאפייני בחירה -->
@@ -231,14 +269,14 @@
 
         <div class="mt-auto p-4 border-t border-gray-700 space-y-2">
             <!-- כפתור ייבוא (נסתר) -->
-            <input type="file" id="file-input" accept=".html" style="display: none;" onchange="handleFileSelect(event)">
+            <input type="file" id="file-input" accept=".json" style="display: none;" onchange="handleFileSelect(event)">
             <button onclick="document.getElementById('file-input').click()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                ייבוא פרויקט
+                ייבוא פרויקט (JSON)
             </button>
             <button onclick="saveProject()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                שמור פרויקט
+                שמור פרויקט (JSON)
             </button>
             <button onclick="saveDocx()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -304,6 +342,9 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- חלק 3: JAVASCRIPT - לוגיקה              -->
+    <!-- ========================================== -->
     <script>
         // לוגיקת כניסה
         function validateLogin() {
@@ -320,7 +361,6 @@
             }
         }
 
-        // אפשור לחיצה על Enter בשדה הסיסמה
         document.getElementById('access-code').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 validateLogin();
@@ -341,50 +381,63 @@
             offsetY: 0,
             tool: 'select',
             isDragging: false,
-            isRotating: false, // מצב סיבוב חדש
+            isRotating: false, 
             isPanning: false,
             startDragX: 0,
             startDragY: 0,
-            
-            gridOpacity: 1, // שקיפות רשת
-
-            // משתנים לחישוב סיבוב מדויק
+            gridOpacity: 1, 
+            showPageBounds: false,
+            pageWidth: 1000,
+            pageHeight: 800,
+            rulerScale: 1, 
             dragStartAngle: 0,
             initialRotation: 0,
-
             shapes: [],
             selectedId: null,
             tempShape: null,
-            // היסטוריה
             history: [],
             historyStep: -1
         };
 
         // שחזור נתונים אם נפתח מקובץ שמור
-        const savedData = null; // יוחלף על ידי פונקציית שמירה
+        const savedData = null; 
+        const savedSettings = null; 
+
         if (savedData) {
-            // שחזור מלא של אובייקטים (כולל מתודות)
             state.shapes = savedData.map(s => {
                 const shape = new Shape(s.type, s.x, s.y, s.color);
                 Object.assign(shape, s);
-                // ברירת מחדל לתכונות חדשות אם חסרות
                 if (shape.scale === undefined) shape.scale = 1;
                 if (shape.depth === undefined) shape.depth = 0;
                 if (shape.fillOpacity === undefined) shape.fillOpacity = 0;
-                if (shape.angleSpan === undefined) shape.angleSpan = 60; // ברירת מחדל למחוגה
+                if (shape.angleSpan === undefined) shape.angleSpan = 60;
                 return shape;
             });
         }
 
-        // הגדרת גודל קנבס
+        if (savedSettings) {
+            if (savedSettings.pageWidth) state.pageWidth = savedSettings.pageWidth;
+            if (savedSettings.pageHeight) state.pageHeight = savedSettings.pageHeight;
+            if (savedSettings.showPageBounds !== undefined) state.showPageBounds = savedSettings.showPageBounds;
+            if (savedSettings.rulerScale !== undefined) state.rulerScale = savedSettings.rulerScale;
+            if (savedSettings.gridOpacity !== undefined) state.gridOpacity = savedSettings.gridOpacity;
+            
+            document.getElementById('chk-show-page').checked = state.showPageBounds;
+            document.getElementById('page-width').value = state.pageWidth;
+            document.getElementById('page-height').value = state.pageHeight;
+            document.getElementById('ruler-scale-input').value = state.rulerScale || 1;
+            
+            if (state.showPageBounds) {
+                document.getElementById('page-dims').classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
         function resize() {
             canvas.width = wrapper.clientWidth;
             canvas.height = wrapper.clientHeight;
             draw();
         }
         window.addEventListener('resize', resize);
-
-        // --- מחלקות צורות ---
 
         class Shape {
             constructor(type, x, y, color = '#000000') {
@@ -394,21 +447,18 @@
                 this.y = y;
                 this.width = 0;
                 this.height = 0;
-                this.rotation = 0; // במעלות
-                this.scale = 1;    // קנה מידה
-                this.depth = 0;    // עומק (צל)
-                this.fillOpacity = 0; // שקיפות מילוי (0-1)
-                this.angleSpan = 60; // מפתח זווית למחוגה
+                this.rotation = 0; 
+                this.scale = 1;    
+                this.depth = 0;    
+                this.fillOpacity = 0; 
+                this.angleSpan = 60; 
                 this.color = color;
                 this.selected = false;
             }
 
-            // חישוב גבולות עבור לוגיקה מקומית (bounding box)
             getBounds() {
-                // התחשבות ב-SCALE
                 let w = this.width * this.scale;
                 let h = this.height * this.scale;
-                
                 let bx = 0, by = 0, bw = w, bh = h;
                 
                 if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear' || this.type === 'compass') {
@@ -419,7 +469,6 @@
                     by = -5 * this.scale / state.scale;
                     bh = 10 * this.scale / state.scale;
                 }
-                // משולש, מלבן ושאר הצורות משתמשות בברירת המחדל (0,0)
                 return {bx, by, bw, bh};
             }
 
@@ -429,17 +478,14 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation * Math.PI / 180);
                 
-                // שימוש בגבולות מעודכנים (כולל Scale)
                 const {bx, by, bw, bh} = this.getBounds();
 
                 ctx.strokeStyle = '#3b82f6';
                 ctx.lineWidth = 2 / state.scale;
                 ctx.setLineDash([5 / state.scale, 5 / state.scale]);
                 
-                // מסגרת
                 ctx.strokeRect(bx - 5/state.scale, by - 5/state.scale, bw + 10/state.scale, bh + 10/state.scale);
                 
-                // ידית סיבוב עליונה
                 let handleX = bx + bw/2;
                 let handleY = by - 5/state.scale;
                 ctx.setLineDash([]);
@@ -452,7 +498,6 @@
                 ctx.arc(handleX, handleY - 20/state.scale, 4/state.scale, 0, Math.PI * 2);
                 ctx.fill();
 
-                // ידיות פינתיות
                 const cornerRadius = 4 / state.scale;
                 const corners = [
                     {x: bx - 5/state.scale, y: by - 5/state.scale},
@@ -504,7 +549,7 @@
 
                 return false;
             }
-            // בדיקת התנגשות מדויקת (OBB - Oriented Bounding Box)
+
             contains(mx, my) {
                 const rad = -this.rotation * Math.PI / 180;
                 const dx = mx - this.x;
@@ -515,7 +560,6 @@
 
                 const tolerance = 10 / state.scale;
                 
-                // מימדים עם סקאלה
                 const s = this.scale;
                 const w = this.width * s;
                 const h = this.height * s;
@@ -538,10 +582,7 @@
             }
         }
 
-        // --- ציור ---
-
         function drawGrid(ctx) {
-            // אם השקיפות היא 0, לא מציירים כלום (רקע לבן)
             if (state.gridOpacity <= 0) return;
 
             const gridSize = 50;
@@ -551,31 +592,29 @@
             const endY = startY + (canvas.height / state.scale) + gridSize;
 
             ctx.beginPath();
-            // שימוש ב-RGBA כדי לשלוט בשקיפות הרשת
-            ctx.strokeStyle = `rgba(229, 231, 235, ${state.gridOpacity})`; // #e5e7eb
+            ctx.strokeStyle = `rgba(229, 231, 235, ${state.gridOpacity})`; 
             ctx.lineWidth = 1 / state.scale;
 
             for (let x = startX; x < endX; x += gridSize) {
-                if (x < 0) continue;
+                if (x < 0 && !state.showPageBounds) continue; 
                 ctx.moveTo(x, startY);
                 ctx.lineTo(x, endY);
             }
             for (let y = startY; y < endY; y += gridSize) {
-                if (y < 0) continue;
+                if (y < 0 && !state.showPageBounds) continue;
                 ctx.moveTo(startX, y);
                 ctx.lineTo(endX, y);
             }
             ctx.stroke();
 
-            // צירים ראשיים (גם הם מושפעים מהשקיפות כדי לאפשר רקע לבן נקי)
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(75, 85, 99, ${state.gridOpacity})`; // #4b5563
+            ctx.strokeStyle = `rgba(75, 85, 99, ${state.gridOpacity})`; 
             ctx.lineWidth = 2 / state.scale;
             if (startX <= 0 && endX >= 0) {
-                ctx.moveTo(0, Math.max(0, startY)); ctx.lineTo(0, endY);
+                ctx.moveTo(0, startY); ctx.lineTo(0, endY);
             }
             if (startY <= 0 && endY >= 0) {
-                ctx.moveTo(Math.max(0, startX), 0); ctx.lineTo(endX, 0);
+                ctx.moveTo(startX, 0); ctx.lineTo(endX, 0);
             }
             ctx.stroke();
         }
@@ -584,46 +623,96 @@
             rulerX.innerHTML = '';
             rulerY.innerHTML = '';
             
-            // אם הרשת כבויה (רקע לבן), אולי נרצה להסתיר גם את הסרגלים?
-            // כרגע נשאיר אותם, אבל אפשר להוסיף תנאי:
-            // if (state.gridOpacity <= 0) return; 
-            
             const gridSize = 50 * state.scale;
             
             for (let i = 0; i < wrapper.clientWidth / gridSize + 1; i++) {
-                const val = Math.floor((-state.offsetX + (i * gridSize)) / state.scale / 50) * 50;
-                if (val < 0) continue;
+                const rawVal = Math.floor((-state.offsetX + (i * gridSize)) / state.scale / 50) * 50;
+                const displayVal = rawVal * state.rulerScale;
+
+                if (rawVal < 0 && !state.showPageBounds) continue;
 
                 const mark = document.createElement('div');
                 mark.style.position = 'absolute';
-                const pixelX = val * state.scale + state.offsetX;
+                const pixelX = rawVal * state.scale + state.offsetX;
                 
                 mark.style.left = pixelX + 'px';
                 mark.style.top = '0';
                 mark.style.fontSize = '10px';
                 mark.style.color = '#555';
-                mark.innerText = Math.round(val);
+                mark.innerText = Number.isInteger(displayVal) ? displayVal : displayVal.toFixed(1);
                 rulerX.appendChild(mark);
             }
              
              for (let i = 0; i < wrapper.clientHeight / gridSize + 1; i++) {
-                const val = Math.floor((-state.offsetY + (i * gridSize)) / state.scale / 50) * 50;
-                if (val < 0) continue;
+                const rawVal = Math.floor((-state.offsetY + (i * gridSize)) / state.scale / 50) * 50;
+                const displayVal = rawVal * state.rulerScale;
+
+                if (rawVal < 0 && !state.showPageBounds) continue;
 
                 const mark = document.createElement('div');
                 mark.style.position = 'absolute';
-                const pixelY = val * state.scale + state.offsetY;
+                const pixelY = rawVal * state.scale + state.offsetY;
 
                 mark.style.top = pixelY + 'px';
                 mark.style.right = '0'; 
                 mark.style.fontSize = '10px';
                 mark.style.color = '#555';
-                mark.innerText = Math.round(val);
+                mark.innerText = Number.isInteger(displayVal) ? displayVal : displayVal.toFixed(1);
                 rulerY.appendChild(mark);
             }
         }
 
-        // עזר להמרת צבע להוספת אלפא
+        function draw(ctxOverride) {
+            const c = ctxOverride || ctx;
+            const cvs = c.canvas;
+
+            c.clearRect(0, 0, cvs.width, cvs.height);
+            
+            if (state.showPageBounds) {
+                c.fillStyle = '#e5e7eb'; 
+                c.fillRect(0, 0, cvs.width, cvs.height);
+            }
+
+            c.save();
+            c.translate(state.offsetX, state.offsetY);
+            c.scale(state.scale, state.scale);
+            
+            if (state.showPageBounds) {
+                c.fillStyle = '#ffffff';
+                c.shadowColor = 'rgba(0,0,0,0.2)';
+                c.shadowBlur = 20;
+                c.shadowOffsetX = 5;
+                c.shadowOffsetY = 5;
+                c.fillRect(0, 0, state.pageWidth, state.pageHeight);
+                
+                c.shadowColor = 'transparent';
+                c.shadowBlur = 0;
+                c.shadowOffsetX = 0;
+                c.shadowOffsetY = 0;
+
+                c.strokeStyle = '#9ca3af';
+                c.lineWidth = 1 / state.scale;
+                c.strokeRect(0, 0, state.pageWidth, state.pageHeight);
+            }
+
+            drawGrid(c);
+
+            state.shapes.forEach(shape => {
+                drawShape(c, shape);
+            });
+
+            if (state.tempShape) {
+                drawShape(c, state.tempShape);
+            }
+
+            if (!ctxOverride) {
+                state.shapes.forEach(shape => shape.drawSelection(c));
+            }
+
+            c.restore();
+            if (!ctxOverride) drawRulers();
+        }
+
         function getAlphaHex(opacity) {
             const val = Math.max(0, Math.min(255, Math.round(opacity * 255)));
             return val.toString(16).padStart(2, '0');
@@ -633,14 +722,12 @@
             ctx.save();
             ctx.translate(shape.x, shape.y);
             
-            // אפקט "הרמה" בגרירה + עומק
             if (state.isDragging && shape.selected) {
                 ctx.shadowColor = 'rgba(0,0,0,0.3)';
                 ctx.shadowBlur = 15 + (shape.depth || 0);
                 ctx.shadowOffsetY = 10 + (shape.depth || 0);
                 ctx.globalAlpha = 0.9; 
             } else if (shape.depth > 0) {
-                // אפקט עומק קבוע
                 ctx.shadowColor = 'rgba(0,0,0,0.4)';
                 ctx.shadowBlur = shape.depth * 2;
                 ctx.shadowOffsetY = shape.depth * 1.5;
@@ -648,7 +735,6 @@
 
             ctx.rotate(shape.rotation * Math.PI / 180);
             
-            // יישום סקאלה
             const s = shape.scale || 1;
             ctx.scale(s, s);
 
@@ -667,9 +753,9 @@
             else if (shape.type === 'triangle') {
                 ctx.fillStyle = fillColor;
                 ctx.beginPath();
-                ctx.moveTo(shape.width / 2, 0); // קודקוד עליון
-                ctx.lineTo(shape.width, shape.height); // פינה ימנית תחתונה
-                ctx.lineTo(0, shape.height); // פינה שמאלית תחתונה
+                ctx.moveTo(shape.width / 2, 0); 
+                ctx.lineTo(shape.width, shape.height); 
+                ctx.lineTo(0, shape.height); 
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
@@ -681,32 +767,18 @@
                 ctx.fill();
                 ctx.stroke();
             }
-            else if (shape.type === 'circle-transparent') {
-                // שימוש באותה לוגיקה, המשתמש שולט בשקיפות
-                ctx.fillStyle = fillColor;
-                ctx.beginPath();
-                ctx.arc(0, 0, Math.abs(shape.width), 0, Math.PI * 2);
-                ctx.fill();
-                
-                // מסגרת
-                ctx.strokeStyle = shape.color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
             else if (shape.type === 'compass') {
                 const angleSpanRad = (shape.angleSpan || 60) * Math.PI / 180;
                 const r = Math.abs(shape.width);
                 
                 ctx.fillStyle = fillColor;
                 ctx.beginPath();
-                ctx.moveTo(0, 0); // מרכז
-                // קשת
+                ctx.moveTo(0, 0); 
                 ctx.arc(0, 0, r, 0, angleSpanRad);
-                ctx.lineTo(0, 0); // חזרה למרכז
+                ctx.lineTo(0, 0); 
                 ctx.fill();
                 ctx.stroke();
                 
-                // ציון מרכז קטן
                 ctx.beginPath();
                 ctx.fillStyle = shape.color;
                 ctx.arc(0, 0, 3/s, 0, Math.PI*2);
@@ -719,12 +791,12 @@
                 ctx.stroke();
             }
             else if (shape.type === 'line-dashed') {
-                ctx.setLineDash([10, 10]); // הגדרת קווקוו
+                ctx.setLineDash([10, 10]); 
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.lineTo(shape.width, shape.height);
                 ctx.stroke();
-                ctx.setLineDash([]); // איפוס קווקוו
+                ctx.setLineDash([]); 
             }
             else if (shape.type === 'arrow') {
                 ctx.fillStyle = fillColor;
@@ -732,7 +804,6 @@
                 ctx.moveTo(0, 0);
                 ctx.lineTo(shape.width, 0);
                 ctx.stroke();
-                // ראש חץ
                 ctx.beginPath();
                 ctx.moveTo(shape.width, 0);
                 ctx.lineTo(shape.width - 10, -5);
@@ -746,14 +817,12 @@
                 ctx.lineTo(shape.width, 0);
                 ctx.stroke();
                 
-                // ראש חץ ימני
                 ctx.beginPath();
                 ctx.moveTo(shape.width, 0);
                 ctx.lineTo(shape.width - 10, -5);
                 ctx.lineTo(shape.width - 10, 5);
                 ctx.fill();
 
-                // ראש חץ שמאלי
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.lineTo(10, -5);
@@ -761,16 +830,13 @@
                 ctx.fill();
             }
             else if (shape.type === 'pipe') {
-                // עבור אלמנטים מורכבים עם גרדיאנט, נשתמש ב-Global Alpha במידת הצורך
-                // אבל כאן נשתמש בטכניקה של הוספת שקיפות לגרדיאנט עצמו כדי לא לפגוע במסגרת
                 if (Math.abs(shape.height) < 0.1) {
                     ctx.fillStyle = '#555';
                     ctx.fillRect(0, 0, shape.width, shape.height);
                 } else {
-                    // שמירה על הגרדיאנט המקורי אך הוספת Global Alpha לציור הגוף
                     ctx.save();
-                    ctx.globalAlpha = shape.fillOpacity > 0 ? Math.max(0.2, shape.fillOpacity) : 0; // מינימום נראות אם לא 0
-                    if (shape.fillOpacity === 0) ctx.globalAlpha = 0; // מלא שקוף
+                    ctx.globalAlpha = shape.fillOpacity > 0 ? Math.max(0.2, shape.fillOpacity) : 0; 
+                    if (shape.fillOpacity === 0) ctx.globalAlpha = 0; 
 
                     const grad = ctx.createLinearGradient(0, 0, 0, shape.height);
                     grad.addColorStop(0, '#555');
@@ -781,10 +847,8 @@
                     ctx.restore();
                 }
                 
-                // מסגרת תמיד
                 ctx.strokeRect(0, 0, shape.width, shape.height);
 
-                // אוגנים (Flanges)
                 ctx.fillStyle = '#444';
                 ctx.fillRect(-5, -2, 5, shape.height + 4);
                 ctx.fillRect(shape.width, -2, 5, shape.height + 4);
@@ -795,7 +859,6 @@
                 const rInner = rOuter * 0.8;
                 const hole = rOuter * 0.3;
                 
-                // גלג"ש משתמש בצבע אפור בדרך כלל, נחיל שקיפות
                 ctx.fillStyle = '#6b7280' + fillAlpha; 
                 ctx.beginPath();
                 for (let i = 0; i < teeth * 2; i++) {
@@ -844,7 +907,6 @@
                 ctx.fill();
                 ctx.restore();
                 
-                // מסגרת תמיד
                 ctx.beginPath();
                 ctx.moveTo(0, knobH);
                 ctx.lineTo(w, knobH);
@@ -880,31 +942,6 @@
             ctx.restore();
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.save();
-            ctx.translate(state.offsetX, state.offsetY);
-            ctx.scale(state.scale, state.scale);
-            
-            drawGrid(ctx);
-
-            state.shapes.forEach(shape => {
-                drawShape(ctx, shape);
-            });
-
-            if (state.tempShape) {
-                drawShape(ctx, state.tempShape);
-            }
-
-            state.shapes.forEach(shape => shape.drawSelection(ctx));
-
-            ctx.restore();
-            drawRulers();
-        }
-
-        // --- אינטראקציה ---
-
         function getWorldPos(e) {
             const rect = canvas.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
@@ -928,13 +965,11 @@
             }
 
             if (state.tool === 'select') {
-                // בדיקה אם לוחצים על ידית כלשהי (סיבוב)
                 if (state.selectedId) {
                     const selectedShape = state.shapes.find(s => s.id === state.selectedId);
                     if (selectedShape && selectedShape.isOverHandle(pos.x, pos.y)) {
                         state.isRotating = true;
                         
-                        // חישוב זוויות התחלתיות לסיבוב חלק
                         const dx = pos.x - selectedShape.x;
                         const dy = pos.y - selectedShape.y;
                         state.dragStartAngle = Math.atan2(dy, dx) * 180 / Math.PI;
@@ -943,7 +978,6 @@
                     }
                 }
 
-                // בדיקת פגיעה משופרת (OBB)
                 let clickedShape = null;
                 for (let i = state.shapes.length - 1; i >= 0; i--) {
                     if (state.shapes[i].contains(pos.x, pos.y)) {
@@ -976,7 +1010,7 @@
                         const s = new Shape('text', pos.x, pos.y);
                         s.text = text;
                         s.height = 24; 
-                        s.fillOpacity = 1; // טקסט תמיד מלא
+                        s.fillOpacity = 1; 
                         state.shapes.push(s);
                         setTool('select');
                     }
@@ -989,114 +1023,20 @@
             draw();
         });
 
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                // חיפוש תבנית הנתונים בקובץ
-                const regex = /const savedData = (\[.*?\]);/s; 
-                const match = content.match(regex);
-                
-                if (match && match[1]) {
-                    try {
-                        const json = JSON.parse(match[1]);
-                        state.shapes = rehydrateShapes(json);
-                        state.selectedId = null;
-                        document.getElementById('properties-panel').classList.add('hidden');
-                        draw();
-                        saveHistory();
-                        alert("הפרויקט נטען בהצלחה!");
-                    } catch (err) {
-                        console.error(err);
-                        alert("שגיאה בטעינת הקובץ: נתונים לא תקינים.");
-                    }
-                } else {
-                    alert("לא נמצאו נתוני שרטוט בקובץ זה.");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; 
-        }
-
-        function rehydrateShapes(plainShapes) {
-            return plainShapes.map(s => {
-                const shape = new Shape(s.type, s.x, s.y, s.color);
-                Object.assign(shape, s);
-                if (shape.scale === undefined) shape.scale = 1;
-                if (shape.depth === undefined) shape.depth = 0;
-                if (shape.fillOpacity === undefined) shape.fillOpacity = 0;
-                if (shape.angleSpan === undefined) shape.angleSpan = 60;
-                return shape;
-            });
-        }
-
-        function saveHistory() {
-            if (state.historyStep < state.history.length - 1) {
-                state.history = state.history.slice(0, state.historyStep + 1);
-            }
-            state.history.push(JSON.stringify(state.shapes));
-            state.historyStep++;
-            if (state.history.length > 50) {
-                state.history.shift();
-                state.historyStep--;
-            }
-        }
-
-        function undo() {
-            if (state.historyStep > 0) {
-                state.historyStep--;
-                const previousState = JSON.parse(state.history[state.historyStep]);
-                state.shapes = rehydrateShapes(previousState);
-                state.selectedId = null; 
-                document.getElementById('properties-panel').classList.add('hidden');
-                draw();
-            }
-        }
-
-        function redo() {
-            if (state.historyStep < state.history.length - 1) {
-                state.historyStep++;
-                const nextState = JSON.parse(state.history[state.historyStep]);
-                state.shapes = rehydrateShapes(nextState);
-                state.selectedId = null;
-                document.getElementById('properties-panel').classList.add('hidden');
-                draw();
-            }
-        }
-
-        function bringToFront() {
-            if (!state.selectedId) return;
-            const idx = state.shapes.findIndex(s => s.id === state.selectedId);
-            if (idx > -1 && idx < state.shapes.length - 1) {
-                const shape = state.shapes.splice(idx, 1)[0];
-                state.shapes.push(shape);
-                saveHistory();
-                draw();
-            }
-        }
-
-        function sendToBack() {
-            if (!state.selectedId) return;
-            const idx = state.shapes.findIndex(s => s.id === state.selectedId);
-            if (idx > 0) {
-                const shape = state.shapes.splice(idx, 1)[0];
-                state.shapes.unshift(shape);
-                saveHistory();
-                draw();
-            }
-        }
-
         canvas.addEventListener('mousemove', e => {
             const pos = getWorldPos(e);
 
             if (state.isPanning) {
                 let newOffsetX = e.clientX - state.startDragX;
                 let newOffsetY = e.clientY - state.startDragY;
-                state.offsetX = Math.min(newOffsetX, 0);
-                state.offsetY = Math.min(newOffsetY, 0);
+                
+                if (!state.showPageBounds) {
+                    state.offsetX = Math.min(newOffsetX, 0);
+                    state.offsetY = Math.min(newOffsetY, 0);
+                } else {
+                    state.offsetX = newOffsetX;
+                    state.offsetY = newOffsetY;
+                }
                 draw();
                 return;
             }
@@ -1119,7 +1059,6 @@
                     const deltaAngle = currentAngle - state.dragStartAngle;
                     shape.rotation = state.initialRotation + deltaAngle;
                     
-                    // Update rotation slider UI
                     document.getElementById('prop-rotation').value = Math.round(shape.rotation % 360);
                     document.getElementById('val-rotation').innerText = Math.round(shape.rotation % 360) + "°";
                     
@@ -1135,7 +1074,6 @@
                         shape.x = pos.x - state.dragOffsetX;
                         shape.y = pos.y - state.dragOffsetY;
                         
-                        // Update Y slider UI
                         document.getElementById('prop-y').value = Math.round(shape.y);
                         document.getElementById('val-y').innerText = Math.round(shape.y);
                     }
@@ -1143,7 +1081,7 @@
                     const dx = pos.x - state.startX;
                     const dy = pos.y - state.startY;
                     
-                    if (state.tool === 'rect' || state.tool === 'pipe' || state.tool === 'pipe-transparent' || state.tool === 'weight' || state.tool === 'triangle') {
+                    if (state.tool === 'rect' || state.tool === 'pipe' || state.tool === 'weight' || state.tool === 'triangle') {
                         state.tempShape.width = dx;
                         state.tempShape.height = dy;
                     } else if (state.tool === 'circle' || state.tool === 'circle-transparent' || state.tool === 'gear' || state.tool === 'compass') {
@@ -1173,7 +1111,7 @@
                 let historyNeeded = false;
 
                 if (state.tempShape) {
-                    if (state.tempShape.type === 'rect' || state.tempShape.type === 'pipe' || state.tempShape.type === 'pipe-transparent' || state.tempShape.type === 'weight' || state.tempShape.type === 'triangle') {
+                    if (state.tempShape.type === 'rect' || state.tempShape.type === 'pipe' || state.tempShape.type === 'weight' || state.tempShape.type === 'triangle') {
                         if (state.tempShape.width < 0) {
                             state.tempShape.x += state.tempShape.width;
                             state.tempShape.width = Math.abs(state.tempShape.width);
@@ -1218,8 +1156,13 @@
 
             state.scale = newScale;
 
-            state.offsetX = Math.min(mouseX - worldX * state.scale, 0);
-            state.offsetY = Math.min(mouseY - worldY * state.scale, 0);
+            if (!state.showPageBounds) {
+                state.offsetX = Math.min(mouseX - worldX * state.scale, 0);
+                state.offsetY = Math.min(mouseY - worldY * state.scale, 0);
+            } else {
+                state.offsetX = mouseX - worldX * state.scale;
+                state.offsetY = mouseY - worldY * state.scale;
+            }
 
             updateZoomUI();
             draw();
@@ -1238,11 +1181,6 @@
                 document.getElementById('properties-panel').classList.add('hidden');
                 draw();
             }
-        }
-
-        function setGridOpacity(val) {
-            state.gridOpacity = parseFloat(val);
-            draw();
         }
 
         function zoom(delta) {
@@ -1267,6 +1205,12 @@
             state.scale = 1;
             state.offsetX = 0;
             state.offsetY = 0;
+            if (state.showPageBounds) {
+                 const canvasCenter = wrapper.clientWidth / 2;
+                 const pageCenter = state.pageWidth / 2;
+                 state.offsetX = canvasCenter - pageCenter;
+                 state.offsetY = 50; 
+            }
             updateZoomUI();
             draw();
         }
@@ -1275,7 +1219,6 @@
             const panel = document.getElementById('properties-panel');
             panel.classList.remove('hidden');
             
-            // עדכון שדות הקלט עם ערכי האלמנט
             document.getElementById('prop-rotation').value = Math.round(shape.rotation % 360);
             document.getElementById('val-rotation').innerText = Math.round(shape.rotation % 360) + "°";
 
@@ -1293,7 +1236,6 @@
             document.getElementById('prop-opacity').value = shape.fillOpacity || 0;
             document.getElementById('val-opacity').innerText = Math.round((shape.fillOpacity || 0) * 100) + "%";
 
-            // הצגת בקר זווית למחוגה
             if (shape.type === 'compass') {
                 document.getElementById('prop-group-angle').classList.remove('hidden');
                 document.getElementById('prop-angleSpan').value = shape.angleSpan || 60;
@@ -1362,41 +1304,157 @@
             }
         });
 
+        // פונקציות שנוספו מחדש
+        function togglePageBounds(isChecked) {
+            state.showPageBounds = isChecked;
+            const dimsPanel = document.getElementById('page-dims');
+            if (isChecked) {
+                dimsPanel.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                dimsPanel.classList.add('opacity-50', 'pointer-events-none');
+                if (state.offsetX > 0) state.offsetX = 0;
+                if (state.offsetY > 0) state.offsetY = 0;
+            }
+            draw();
+        }
+
+        function updatePageSize() {
+            const w = parseInt(document.getElementById('page-width').value) || 1000;
+            const h = parseInt(document.getElementById('page-height').value) || 800;
+            state.pageWidth = w;
+            state.pageHeight = h;
+            draw();
+        }
+
+        function updateRulerScale(val) {
+            const scale = parseFloat(val);
+            if (!isNaN(scale) && scale > 0) {
+                state.rulerScale = scale;
+                draw();
+            }
+        }
+
+        function setGridOpacity(val) {
+            state.gridOpacity = parseFloat(val);
+            draw();
+        }
+
+        function bringToFront() {
+            if (!state.selectedId) return;
+            const idx = state.shapes.findIndex(s => s.id === state.selectedId);
+            if (idx > -1 && idx < state.shapes.length - 1) {
+                const shape = state.shapes.splice(idx, 1)[0];
+                state.shapes.push(shape);
+                saveHistory();
+                draw();
+            }
+        }
+
+        function sendToBack() {
+            if (!state.selectedId) return;
+            const idx = state.shapes.findIndex(s => s.id === state.selectedId);
+            if (idx > 0) {
+                const shape = state.shapes.splice(idx, 1)[0];
+                state.shapes.unshift(shape);
+                saveHistory();
+                draw();
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                try {
+                    const projectData = JSON.parse(content);
+                    
+                    let shapesData = [];
+                    let settingsData = {};
+
+                    if (Array.isArray(projectData)) {
+                        shapesData = projectData;
+                    } else if (projectData.shapes) {
+                        shapesData = projectData.shapes;
+                        settingsData = projectData.settings || {};
+                    }
+
+                    state.shapes = rehydrateShapes(shapesData);
+                    
+                    if (settingsData.pageWidth) state.pageWidth = settingsData.pageWidth;
+                    if (settingsData.pageHeight) state.pageHeight = settingsData.pageHeight;
+                    if (settingsData.showPageBounds !== undefined) state.showPageBounds = settingsData.showPageBounds;
+                    if (settingsData.rulerScale !== undefined) state.rulerScale = settingsData.rulerScale;
+                    if (settingsData.gridOpacity !== undefined) state.gridOpacity = settingsData.gridOpacity;
+                    
+                    document.getElementById('chk-show-page').checked = state.showPageBounds;
+                    document.getElementById('page-width').value = state.pageWidth;
+                    document.getElementById('page-height').value = state.pageHeight;
+                    document.getElementById('ruler-scale-input').value = state.rulerScale || 1;
+                    
+                    togglePageBounds(state.showPageBounds); 
+                    
+                    state.selectedId = null;
+                    document.getElementById('properties-panel').classList.add('hidden');
+                    
+                    state.history = [];
+                    state.historyStep = -1;
+                    saveHistory();
+
+                    draw();
+                    alert("הפרויקט נטען בהצלחה!");
+                } catch (err) {
+                    console.error(err);
+                    alert("שגיאה בטעינת הקובץ: פורמט לא תקין.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
         function saveProject() {
-            const currentHtml = document.documentElement.outerHTML;
-            const dataString = JSON.stringify(state.shapes);
-            const newHtml = currentHtml.replace(/const savedData = .*?;/, `const savedData = ${dataString};`);
+            const projectData = {
+                version: "2.9",
+                shapes: state.shapes,
+                settings: {
+                    pageWidth: state.pageWidth,
+                    pageHeight: state.pageHeight,
+                    showPageBounds: state.showPageBounds,
+                    rulerScale: state.rulerScale,
+                    gridOpacity: state.gridOpacity,
+                    scale: state.scale,
+                    offsetX: state.offsetX,
+                    offsetY: state.offsetY
+                }
+            };
             
-            const blob = new Blob([newHtml], {type: 'text/html'});
+            const jsonString = JSON.stringify(projectData, null, 2);
+            const blob = new Blob([jsonString], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'mechanical_sketch.html';
+            a.download = 'mechanical_sketch.json';
             a.click();
             URL.revokeObjectURL(url);
         }
 
         function saveDocx() {
-            // 1. קבלת התמונה מהקנבס
-            // נשמור את מצב הבחירה הנוכחי
             const originalSelection = state.selectedId;
-            // נבטל בחירה כדי שלא יראו את המסגרת הכחולה בתמונה
             state.shapes.forEach(s => s.selected = false);
             draw();
 
             const dataUrl = canvas.toDataURL('image/png');
 
-            // נחזיר את הבחירה
             if (originalSelection) {
                 const s = state.shapes.find(sh => sh.id === originalSelection);
                 if (s) s.selected = true;
             }
             draw();
             
-            // 2. יצירת מסמך DOCX
             const { Document, Packer, Paragraph, ImageRun, TextRun, AlignmentType } = docx;
             
-            // המרה ל-Blob כדי להתמודד עם מגבלות גודל מחרוזת בדפדפנים מסוימים
             fetch(dataUrl).then(res => res.blob()).then(blob => {
                 const reader = new FileReader();
                 reader.onloadend = function() {
@@ -1411,7 +1469,7 @@
                                         new TextRun({
                                             text: "שרטוט הנדסי - ייצוא",
                                             bold: true,
-                                            size: 32, // 16pt
+                                            size: 32, 
                                             font: "Arial"
                                         }),
                                     ],
@@ -1424,7 +1482,7 @@
                                             data: base64data,
                                             transformation: {
                                                 width: 600,
-                                                height: 400 * (canvas.height / canvas.width) // שמירה על יחס גובה-רוחב
+                                                height: 400 * (canvas.height / canvas.width) 
                                             }
                                         })
                                     ],
@@ -1434,7 +1492,7 @@
                                     children: [
                                         new TextRun({
                                             text: "נוצר באמצעות מערכת שרטוט מכונות - איתי בן טל",
-                                            size: 20, // 10pt
+                                            size: 20, 
                                             color: "888888"
                                         })
                                     ],
@@ -1445,7 +1503,6 @@
                         }]
                     });
 
-                    // 3. שמירה והורדה
                     Packer.toBlob(doc).then(blob => {
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement("a");
@@ -1460,6 +1517,40 @@
                 };
                 reader.readAsDataURL(blob);
             });
+        }
+
+        function saveHistory() {
+            if (state.historyStep < state.history.length - 1) {
+                state.history = state.history.slice(0, state.historyStep + 1);
+            }
+            state.history.push(JSON.stringify(state.shapes));
+            state.historyStep++;
+            if (state.history.length > 50) {
+                state.history.shift();
+                state.historyStep--;
+            }
+        }
+
+        function undo() {
+            if (state.historyStep > 0) {
+                state.historyStep--;
+                const previousState = JSON.parse(state.history[state.historyStep]);
+                state.shapes = rehydrateShapes(previousState);
+                state.selectedId = null; 
+                document.getElementById('properties-panel').classList.add('hidden');
+                draw();
+            }
+        }
+
+        function redo() {
+            if (state.historyStep < state.history.length - 1) {
+                state.historyStep++;
+                const nextState = JSON.parse(state.history[state.historyStep]);
+                state.shapes = rehydrateShapes(nextState);
+                state.selectedId = null;
+                document.getElementById('properties-panel').classList.add('hidden');
+                draw();
+            }
         }
 
         resize();
