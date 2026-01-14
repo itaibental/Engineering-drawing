@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שרטוט הנדסי מכני</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- הוספת ספריית docx לייצוא -->
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
+        
+        body {
+            font-family: 'Assistant', sans-serif;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            user-select: none; /* מניעת בחירת טקסט בזמן גרירה */
+        }
+
+        #canvas-container {
+            cursor: crosshair;
+            background-color: #ffffff;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .tool-btn {
+            transition: all 0.2s;
+        }
+        .tool-btn.active {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        /* סרגל עליון ושמאלי */
+        .ruler-x { height: 20px; background: #e5e7eb; position: relative; overflow: hidden; }
+        .ruler-y { width: 20px; background: #e5e7eb; position: relative; overflow: hidden; }
+        
+        .prop-input {
+            background: #374151;
+            border: 1px solid #4b5563;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        /* עיצוב סליידרים */
+        input[type=range] {
+            height: 4px;
+            border-radius: 2px;
+            background: #4b5563;
+            outline: none;
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="flex h-screen text-gray-800">
+
+    <!-- חלון כניסה (Login Overlay) -->
+    <div id="login-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md w-full border-t-4 border-blue-500">
+            <div class="mb-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">שרטוט הנדסי מכני</h2>
+                <p class="text-gray-600 mb-1">פותח על ידי <strong>איתי בן טל</strong></p>
+                <p class="text-xs text-gray-400">כל הזכויות שמורות ©</p>
+            </div>
+            
+            <div class="mb-6 text-right">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">קוד גישה אישי:</label>
+                <input type="password" id="access-code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center text-lg" placeholder="הכנס קוד כאן">
+                <p id="login-error" class="text-red-500 text-xs mt-2 hidden flex items-center gap-1 justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                    קוד שגוי, אנא נסה שנית.
+                </p>
+            </div>
+            
+            <button onclick="validateLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-[1.02] active:scale-95 shadow-md">
+                כניסה למערכת
+            </button>
+        </div>
+    </div>
+
+    <!-- סרגל כלים ימני -->
+    <div class="w-64 bg-gray-800 text-white flex flex-col border-l border-gray-700 shadow-xl z-10 overflow-y-auto">
+        <div class="p-4 border-b border-gray-700 bg-gray-900">
+            <h1 class="text-xl font-bold text-blue-400">שרטוט מכונות</h1>
+            <p class="text-xs text-gray-400 mt-1">גרסה 2.0 (מאובטח)</p>
+        </div>
+
+        <!-- כלים ראשיים -->
+        <div class="p-4 grid grid-cols-2 gap-2">
+            <button onclick="setTool('select')" id="btn-select" class="tool-btn active flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700" title="בחירה ועריכה">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
+                <span class="text-xs mt-1">בחירה</span>
+            </button>
+            <button onclick="setTool('rect')" id="btn-rect" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+                <span class="text-xs mt-1">מלבן</span>
+            </button>
+            <button onclick="setTool('triangle')" id="btn-triangle" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/></svg>
+                <span class="text-xs mt-1">משולש</span>
+            </button>
+            <button onclick="setTool('circle')" id="btn-circle" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                <span class="text-xs mt-1">עיגול</span>
+            </button>
+            <button onclick="setTool('line')" id="btn-line" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span class="text-xs mt-1">קו</span>
+            </button>
+            <button onclick="setTool('arrow')" id="btn-arrow" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span class="text-xs mt-1">חץ</span>
+            </button>
+            <button onclick="setTool('double-arrow')" id="btn-double-arrow" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/><polyline points="12 19 5 12 12 5"/></svg>
+                <span class="text-xs mt-1">חץ דו"צ</span>
+            </button>
+            <button onclick="setTool('text')" id="btn-text" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                <span class="text-xs mt-1">טקסט</span>
+            </button>
+            <!-- כלים מכאניים -->
+            <button onclick="setTool('gear')" id="btn-gear" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700 text-yellow-400 border-yellow-800">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 10 10 0 0 0-10-10zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0"/></svg>
+                <span class="text-xs mt-1">גלג"ש</span>
+            </button>
+            <button onclick="setTool('pipe')" id="btn-pipe" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700 text-gray-300 border-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+                <span class="text-xs mt-1">צינור</span>
+            </button>
+            <button onclick="setTool('weight')" id="btn-weight" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700 text-purple-400 border-purple-800">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20h12"/><path d="M12 10v10"/><path d="M12 10a4 4 0 0 1 0-8 4 4 0 0 1 0 8z"/><rect x="6" y="10" width="12" height="10" rx="1"/></svg>
+                <span class="text-xs mt-1">משקולת</span>
+            </button>
+        </div>
+
+        <!-- מאפייני בחירה -->
+        <div id="properties-panel" class="p-4 border-t border-gray-700 hidden">
+            <h3 class="text-sm font-bold mb-3 text-gray-300">בקרת אלמנט</h3>
+            
+            <!-- מיקום אנכי -->
+            <div class="mb-3">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>מיקום אנכי (Y)</span>
+                    <span id="val-y">0</span>
+                </div>
+                <input type="range" id="prop-y" min="0" max="2000" step="10" class="w-full" oninput="updateSelectedProp('y', this.value)">
+            </div>
+
+            <!-- גודל -->
+            <div class="mb-3">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>גודל (Scale)</span>
+                    <span id="val-scale">1.0</span>
+                </div>
+                <input type="range" id="prop-scale" min="0.1" max="3.0" step="0.1" class="w-full" oninput="updateSelectedProp('scale', this.value)">
+            </div>
+
+            <!-- סיבוב -->
+            <div class="mb-3">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>סיבוב (360°)</span>
+                    <span id="val-rotation">0°</span>
+                </div>
+                <input type="range" id="prop-rotation" min="0" max="360" step="1" class="w-full" oninput="updateSelectedProp('rotation', this.value)">
+            </div>
+
+            <!-- שקיפות -->
+            <div class="mb-3">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>שקיפות מילוי</span>
+                    <span id="val-opacity">0%</span>
+                </div>
+                <input type="range" id="prop-opacity" min="0" max="1" step="0.05" class="w-full" oninput="updateSelectedProp('opacity', this.value)">
+            </div>
+
+            <!-- עומק -->
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>עומק תלת-ממד</span>
+                    <span id="val-depth">0</span>
+                </div>
+                <input type="range" id="prop-depth" min="0" max="50" step="1" class="w-full" oninput="updateSelectedProp('depth', this.value)">
+            </div>
+
+            <!-- צבע -->
+            <div class="flex items-center justify-between mb-4 border-t border-gray-700 pt-3">
+                <label class="text-xs">צבע:</label>
+                <input type="color" id="prop-color" class="w-8 h-6 p-0 border-0" onchange="updateSelectedProp('color', this.value)">
+            </div>
+            
+            <!-- סידור שכבות -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="bringToFront()" class="bg-gray-700 hover:bg-gray-600 text-white text-xs py-1 rounded" title="הבא לקדמה">
+                    ⇧ לקדמה
+                </button>
+                <button onclick="sendToBack()" class="bg-gray-700 hover:bg-gray-600 text-white text-xs py-1 rounded" title="העבר לרקע">
+                    ⇩ לרקע
+                </button>
+            </div>
+
+            <button onclick="deleteSelected()" class="w-full mt-2 bg-red-600 hover:bg-red-700 text-white text-xs py-1 rounded">
+                מחיקת אלמנט
+            </button>
+        </div>
+
+        <div class="mt-auto p-4 border-t border-gray-700 space-y-2">
+            <button onclick="saveProject()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                שמור פרויקט
+            </button>
+            <button onclick="saveDocx()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                ייצוא ל-DOCX
+            </button>
+        </div>
+    </div>
+
+    <!-- אזור עבודה ראשי -->
+    <div class="flex-1 flex flex-col relative overflow-hidden">
+        
+        <!-- סרגל כלים עליון (זום) -->
+        <div class="bg-white border-b flex items-center p-2 gap-4 shadow-sm z-10">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-gray-600">קנה מידה:</span>
+                <button onclick="zoom(-0.1)" class="p-1 hover:bg-gray-200 rounded text-xl font-bold">-</button>
+                <input type="range" id="zoom-slider" min="0.1" max="5.0" step="0.1" value="1.0" class="w-32" oninput="setZoom(this.value)">
+                <button onclick="zoom(0.1)" class="p-1 hover:bg-gray-200 rounded text-xl font-bold">+</button>
+                <span id="zoom-display" class="text-sm w-12 text-center">100%</span>
+            </div>
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+            
+            <!-- כפתורי היסטוריה -->
+            <div class="flex items-center gap-1">
+                <button onclick="undo()" class="p-1 hover:bg-gray-200 rounded" title="ביטול צעד אחרון (Ctrl+Z)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                </button>
+                <button onclick="redo()" class="p-1 hover:bg-gray-200 rounded" title="ביצוע חוזר (Ctrl+Y)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: scaleX(-1);"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                </button>
+            </div>
+            
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+            
+            <!-- שליטת רשת -->
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-gray-600">רשת:</span>
+                <input type="range" min="0" max="1" step="0.1" value="1" class="w-20" oninput="setGridOpacity(this.value)" title="שקיפות רשת">
+            </div>
+
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+            <span class="text-xs text-gray-500 hidden sm:block">גלול לזום | קליק ימני לגרירת המסך</span>
+            <div class="mr-auto">
+                 <button onclick="resetView()" class="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">איפוס מבט</button>
+            </div>
+        </div>
+
+        <!-- קונטיינר הקנבס -->
+        <div class="relative flex-1 bg-gray-50 flex">
+            <!-- סרגלים -->
+            <div id="ruler-y" class="ruler-y absolute top-0 right-0 h-full border-l border-gray-400 z-10"></div>
+            <div class="flex-1 flex flex-col relative">
+                <div id="ruler-x" class="ruler-x w-full border-b border-gray-400 z-10"></div>
+                <div id="canvas-wrapper" class="flex-1 relative overflow-hidden bg-white">
+                    <canvas id="c"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- קרדיט -->
+        <div class="bg-gray-100 border-t border-gray-300 p-1 text-center text-xs text-gray-600 select-none z-20">
+            נוצר ע"י איתי בן טל כל הזכויות שמורות ©️
+        </div>
+    </div>
+
+    <script>
+        // לוגיקת כניסה
+        function validateLogin() {
+            const input = document.getElementById('access-code');
+            const errorMsg = document.getElementById('login-error');
+            const code = input.value.trim().toUpperCase();
+            
+            if (code === 'TAMAR.K' || code === 'IBT1234') {
+                document.getElementById('login-overlay').classList.add('hidden');
+            } else {
+                errorMsg.classList.remove('hidden');
+                input.classList.add('border-red-500');
+                input.classList.remove('border-gray-300');
+            }
+        }
+
+        // אפשור לחיצה על Enter בשדה הסיסמה
+        document.getElementById('access-code').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                validateLogin();
+            }
+        });
+
+        // --- מערכת קנבס ליבה ---
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+        const rulerX = document.getElementById('ruler-x');
+        const rulerY = document.getElementById('ruler-y');
+
+        // מצב אפליקציה
+        let state = {
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0,
+            tool: 'select',
+            isDragging: false,
+            isRotating: false, // מצב סיבוב חדש
+            isPanning: false,
+            startDragX: 0,
+            startDragY: 0,
+            
+            gridOpacity: 1, // שקיפות רשת
+
+            // משתנים לחישוב סיבוב מדויק
+            dragStartAngle: 0,
+            initialRotation: 0,
+
+            shapes: [],
+            selectedId: null,
+            tempShape: null,
+            // היסטוריה
+            history: [],
+            historyStep: -1
+        };
+
+        // שחזור נתונים אם נפתח מקובץ שמור
+        const savedData = null; // יוחלף על ידי פונקציית שמירה
+        if (savedData) {
+            // שחזור מלא של אובייקטים (כולל מתודות)
+            state.shapes = savedData.map(s => {
+                const shape = new Shape(s.type, s.x, s.y, s.color);
+                Object.assign(shape, s);
+                // ברירת מחדל לתכונות חדשות אם חסרות
+                if (shape.scale === undefined) shape.scale = 1;
+                if (shape.depth === undefined) shape.depth = 0;
+                if (shape.fillOpacity === undefined) shape.fillOpacity = 0;
+                return shape;
+            });
+        }
+
+        // הגדרת גודל קנבס
+        function resize() {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            draw();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- מחלקות צורות ---
+
+        class Shape {
+            constructor(type, x, y, color = '#000000') {
+                this.id = Date.now() + Math.random();
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.width = 0;
+                this.height = 0;
+                this.rotation = 0; // במעלות
+                this.scale = 1;    // קנה מידה
+                this.depth = 0;    // עומק (צל)
+                this.fillOpacity = 0; // שקיפות מילוי (0-1)
+                this.color = color;
+                this.selected = false;
+            }
+
+            // חישוב גבולות עבור לוגיקה מקומית (bounding box)
+            getBounds() {
+                // התחשבות ב-SCALE
+                let w = this.width * this.scale;
+                let h = this.height * this.scale;
+                
+                let bx = 0, by = 0, bw = w, bh = h;
+                
+                if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear') {
+                    bx = -w; by = -w; bw = w * 2; bh = w * 2;
+                } else if (this.type === 'text') {
+                    by = -h; 
+                } else if (this.type === 'line' || this.type === 'arrow' || this.type === 'double-arrow') {
+                    by = -5 * this.scale / state.scale;
+                    bh = 10 * this.scale / state.scale;
+                }
+                // משולש, מלבן ושאר הצורות משתמשות בברירת המחדל (0,0)
+                return {bx, by, bw, bh};
+            }
+
+            drawSelection(ctx) {
+                if (!this.selected) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                
+                // שימוש בגבולות מעודכנים (כולל Scale)
+                const {bx, by, bw, bh} = this.getBounds();
+
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2 / state.scale;
+                ctx.setLineDash([5 / state.scale, 5 / state.scale]);
+                
+                // מסגרת
+                ctx.strokeRect(bx - 5/state.scale, by - 5/state.scale, bw + 10/state.scale, bh + 10/state.scale);
+                
+                // ידית סיבוב עליונה
+                let handleX = bx + bw/2;
+                let handleY = by - 5/state.scale;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(handleX, handleY);
+                ctx.lineTo(handleX, handleY - 20/state.scale);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.fillStyle = '#3b82f6';
+                ctx.arc(handleX, handleY - 20/state.scale, 4/state.scale, 0, Math.PI * 2);
+                ctx.fill();
+
+                // ידיות פינתיות
+                const cornerRadius = 4 / state.scale;
+                const corners = [
+                    {x: bx - 5/state.scale, y: by - 5/state.scale},
+                    {x: bx + bw + 5/state.scale, y: by - 5/state.scale},
+                    {x: bx + bw + 5/state.scale, y: by + bh + 5/state.scale},
+                    {x: bx - 5/state.scale, y: by + bh + 5/state.scale}
+                ];
+
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 1.5 / state.scale;
+                
+                corners.forEach(corner => {
+                    ctx.beginPath();
+                    ctx.arc(corner.x, corner.y, cornerRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                });
+
+                ctx.restore();
+            }
+
+            isOverHandle(mx, my) {
+                if (!this.selected) return false;
+
+                const dx = mx - this.x;
+                const dy = my - this.y;
+                const rad = -this.rotation * Math.PI / 180;
+                const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+                const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+                const {bx, by, bw, bh} = this.getBounds();
+                const hitRadius = 8 / state.scale;
+
+                const topHandleX = bx + bw/2;
+                const topHandleY = (by - 5/state.scale) - 20/state.scale;
+                if (Math.hypot(localX - topHandleX, localY - topHandleY) < hitRadius) return true;
+
+                const corners = [
+                    {x: bx - 5/state.scale, y: by - 5/state.scale},
+                    {x: bx + bw + 5/state.scale, y: by - 5/state.scale},
+                    {x: bx + bw + 5/state.scale, y: by + bh + 5/state.scale},
+                    {x: bx - 5/state.scale, y: by + bh + 5/state.scale}
+                ];
+
+                for (let corner of corners) {
+                     if (Math.hypot(localX - corner.x, localY - corner.y) < hitRadius) return true;
+                }
+
+                return false;
+            }
+            // בדיקת התנגשות מדויקת (OBB - Oriented Bounding Box)
+            contains(mx, my) {
+                const rad = -this.rotation * Math.PI / 180;
+                const dx = mx - this.x;
+                const dy = my - this.y;
+                
+                const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
+                const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+                const tolerance = 10 / state.scale;
+                
+                // מימדים עם סקאלה
+                const s = this.scale;
+                const w = this.width * s;
+                const h = this.height * s;
+
+                if (this.type === 'circle' || this.type === 'circle-transparent' || this.type === 'gear') {
+                    return Math.sqrt(lx*lx + ly*ly) <= Math.abs(w) + tolerance;
+                } 
+                else if (this.type === 'rect' || this.type === 'pipe' || this.type === 'pipe-transparent' || this.type === 'weight' || this.type === 'triangle') {
+                    return (lx >= -tolerance && lx <= w + tolerance && ly >= -tolerance && ly <= h + tolerance);
+                }
+                else if (this.type === 'text') {
+                    ctx.font = `${Math.abs(h)}px Arial`;
+                    const textW = ctx.measureText(this.text || "טקסט").width;
+                    return (lx >= -tolerance && lx <= textW + tolerance && ly >= -h - tolerance && ly <= tolerance);
+                }
+                else if (this.type === 'line' || this.type === 'arrow' || this.type === 'double-arrow') {
+                    return (lx >= -tolerance && lx <= w + tolerance && Math.abs(ly) <= tolerance);
+                }
+                return false;
+            }
+        }
+
+        // --- ציור ---
+
+        function drawGrid(ctx) {
+            // אם השקיפות היא 0, לא מציירים כלום (רקע לבן)
+            if (state.gridOpacity <= 0) return;
+
+            const gridSize = 50;
+            const startX = Math.floor(-state.offsetX / state.scale / gridSize) * gridSize;
+            const startY = Math.floor(-state.offsetY / state.scale / gridSize) * gridSize;
+            const endX = startX + (canvas.width / state.scale) + gridSize;
+            const endY = startY + (canvas.height / state.scale) + gridSize;
+
+            ctx.beginPath();
+            // שימוש ב-RGBA כדי לשלוט בשקיפות הרשת
+            ctx.strokeStyle = `rgba(229, 231, 235, ${state.gridOpacity})`; // #e5e7eb
+            ctx.lineWidth = 1 / state.scale;
+
+            for (let x = startX; x < endX; x += gridSize) {
+                if (x < 0) continue;
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x, endY);
+            }
+            for (let y = startY; y < endY; y += gridSize) {
+                if (y < 0) continue;
+                ctx.moveTo(startX, y);
+                ctx.lineTo(endX, y);
+            }
+            ctx.stroke();
+
+            // צירים ראשיים (גם הם מושפעים מהשקיפות כדי לאפשר רקע לבן נקי)
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(75, 85, 99, ${state.gridOpacity})`; // #4b5563
+            ctx.lineWidth = 2 / state.scale;
+            if (startX <= 0 && endX >= 0) {
+                ctx.moveTo(0, Math.max(0, startY)); ctx.lineTo(0, endY);
+            }
+            if (startY <= 0 && endY >= 0) {
+                ctx.moveTo(Math.max(0, startX), 0); ctx.lineTo(endX, 0);
+            }
+            ctx.stroke();
+        }
+
+        function drawRulers() {
+            rulerX.innerHTML = '';
+            rulerY.innerHTML = '';
+            
+            // אם הרשת כבויה (רקע לבן), אולי נרצה להסתיר גם את הסרגלים?
+            // כרגע נשאיר אותם, אבל אפשר להוסיף תנאי:
+            // if (state.gridOpacity <= 0) return; 
+            
+            const gridSize = 50 * state.scale;
+            
+            for (let i = 0; i < wrapper.clientWidth / gridSize + 1; i++) {
+                const val = Math.floor((-state.offsetX + (i * gridSize)) / state.scale / 50) * 50;
+                if (val < 0) continue;
+
+                const mark = document.createElement('div');
+                mark.style.position = 'absolute';
+                const pixelX = val * state.scale + state.offsetX;
+                
+                mark.style.left = pixelX + 'px';
+                mark.style.top = '0';
+                mark.style.fontSize = '10px';
+                mark.style.color = '#555';
+                mark.innerText = Math.round(val);
+                rulerX.appendChild(mark);
+            }
+             
+             for (let i = 0; i < wrapper.clientHeight / gridSize + 1; i++) {
+                const val = Math.floor((-state.offsetY + (i * gridSize)) / state.scale / 50) * 50;
+                if (val < 0) continue;
+
+                const mark = document.createElement('div');
+                mark.style.position = 'absolute';
+                const pixelY = val * state.scale + state.offsetY;
+
+                mark.style.top = pixelY + 'px';
+                mark.style.right = '0'; 
+                mark.style.fontSize = '10px';
+                mark.style.color = '#555';
+                mark.innerText = Math.round(val);
+                rulerY.appendChild(mark);
+            }
+        }
+
+        // עזר להמרת צבע להוספת אלפא
+        function getAlphaHex(opacity) {
+            const val = Math.max(0, Math.min(255, Math.round(opacity * 255)));
+            return val.toString(16).padStart(2, '0');
+        }
+
+        function drawShape(ctx, shape) {
+            ctx.save();
+            ctx.translate(shape.x, shape.y);
+            
+            // אפקט "הרמה" בגרירה + עומק
+            if (state.isDragging && shape.selected) {
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 15 + (shape.depth || 0);
+                ctx.shadowOffsetY = 10 + (shape.depth || 0);
+                ctx.globalAlpha = 0.9; 
+            } else if (shape.depth > 0) {
+                // אפקט עומק קבוע
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                ctx.shadowBlur = shape.depth * 2;
+                ctx.shadowOffsetY = shape.depth * 1.5;
+            }
+
+            ctx.rotate(shape.rotation * Math.PI / 180);
+            
+            // יישום סקאלה
+            const s = shape.scale || 1;
+            ctx.scale(s, s);
+
+            const fillAlpha = getAlphaHex(shape.fillOpacity);
+            const fillColor = shape.color + fillAlpha;
+
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = shape.color;
+            ctx.lineWidth = 2;
+
+            if (shape.type === 'rect') {
+                ctx.fillStyle = fillColor;
+                ctx.fillRect(0, 0, shape.width, shape.height);
+                ctx.strokeRect(0, 0, shape.width, shape.height);
+            } 
+            else if (shape.type === 'triangle') {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(shape.width / 2, 0); // קודקוד עליון
+                ctx.lineTo(shape.width, shape.height); // פינה ימנית תחתונה
+                ctx.lineTo(0, shape.height); // פינה שמאלית תחתונה
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+            else if (shape.type === 'circle') {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.abs(shape.width), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+            else if (shape.type === 'circle-transparent') {
+                // שימוש באותה לוגיקה, המשתמש שולט בשקיפות
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.abs(shape.width), 0, Math.PI * 2);
+                ctx.fill();
+                
+                // מסגרת
+                ctx.strokeStyle = shape.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            else if (shape.type === 'line') {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(shape.width, shape.height);
+                ctx.stroke();
+            }
+            else if (shape.type === 'arrow') {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(shape.width, 0);
+                ctx.stroke();
+                // ראש חץ
+                ctx.beginPath();
+                ctx.moveTo(shape.width, 0);
+                ctx.lineTo(shape.width - 10, -5);
+                ctx.lineTo(shape.width - 10, 5);
+                ctx.fill();
+            }
+            else if (shape.type === 'double-arrow') {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(shape.width, 0);
+                ctx.stroke();
+                
+                // ראש חץ ימני
+                ctx.beginPath();
+                ctx.moveTo(shape.width, 0);
+                ctx.lineTo(shape.width - 10, -5);
+                ctx.lineTo(shape.width - 10, 5);
+                ctx.fill();
+
+                // ראש חץ שמאלי
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(10, -5);
+                ctx.lineTo(10, 5);
+                ctx.fill();
+            }
+            else if (shape.type === 'pipe') {
+                // עבור אלמנטים מורכבים עם גרדיאנט, נשתמש ב-Global Alpha במידת הצורך
+                // אבל כאן נשתמש בטכניקה של הוספת שקיפות לגרדיאנט עצמו כדי לא לפגוע במסגרת
+                if (Math.abs(shape.height) < 0.1) {
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(0, 0, shape.width, shape.height);
+                } else {
+                    // שמירה על הגרדיאנט המקורי אך הוספת Global Alpha לציור הגוף
+                    ctx.save();
+                    ctx.globalAlpha = shape.fillOpacity > 0 ? Math.max(0.2, shape.fillOpacity) : 0; // מינימום נראות אם לא 0
+                    if (shape.fillOpacity === 0) ctx.globalAlpha = 0; // מלא שקוף
+
+                    const grad = ctx.createLinearGradient(0, 0, 0, shape.height);
+                    grad.addColorStop(0, '#555');
+                    grad.addColorStop(0.5, '#eee');
+                    grad.addColorStop(1, '#555');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, shape.width, shape.height);
+                    ctx.restore();
+                }
+                
+                // מסגרת תמיד
+                ctx.strokeRect(0, 0, shape.width, shape.height);
+
+                // אוגנים (Flanges)
+                ctx.fillStyle = '#444';
+                ctx.fillRect(-5, -2, 5, shape.height + 4);
+                ctx.fillRect(shape.width, -2, 5, shape.height + 4);
+            }
+            else if (shape.type === 'gear') {
+                const teeth = 12;
+                const rOuter = Math.abs(shape.width);
+                const rInner = rOuter * 0.8;
+                const hole = rOuter * 0.3;
+                
+                // גלג"ש משתמש בצבע אפור בדרך כלל, נחיל שקיפות
+                ctx.fillStyle = '#6b7280' + fillAlpha; 
+                ctx.beginPath();
+                for (let i = 0; i < teeth * 2; i++) {
+                    const a = (Math.PI * 2 * i) / (teeth * 2);
+                    const r = (i % 2 === 0) ? rOuter : rInner;
+                    ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(0, 0, hole, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.stroke(); 
+                ctx.beginPath(); ctx.arc(0, 0, hole, 0, Math.PI * 2); ctx.stroke();
+            }
+            else if (shape.type === 'weight') {
+                const w = shape.width;
+                const h = shape.height;
+                
+                if (Math.abs(w) < 0.1) return;
+
+                const bodyH = h * 0.75;
+                const knobH = h * 0.25;
+                
+                ctx.save();
+                ctx.globalAlpha = shape.fillOpacity > 0 ? Math.max(0.2, shape.fillOpacity) : 0;
+                
+                const grad = ctx.createLinearGradient(0, 0, w, 0);
+                grad.addColorStop(0, '#374151');
+                grad.addColorStop(0.3, '#9ca3af');
+                grad.addColorStop(0.6, '#4b5563');
+                grad.addColorStop(1, '#1f2937');
+                
+                ctx.fillStyle = grad;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, knobH);
+                ctx.lineTo(w, knobH);
+                ctx.lineTo(w * 0.9, h);
+                ctx.lineTo(w * 0.1, h);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+                
+                // מסגרת תמיד
+                ctx.beginPath();
+                ctx.moveTo(0, knobH);
+                ctx.lineTo(w, knobH);
+                ctx.lineTo(w * 0.9, h);
+                ctx.lineTo(w * 0.1, h);
+                ctx.closePath();
+                ctx.stroke();
+
+                const knobW = w * 0.4;
+                const knobX = (w - knobW) / 2;
+                
+                ctx.fillStyle = '#1f2937';
+                ctx.fillRect(knobX, 0, knobW, knobH);
+                ctx.strokeRect(knobX, 0, knobW, knobH);
+                
+                ctx.beginPath();
+                ctx.arc(w/2, 0, Math.abs(knobW/1.5), Math.PI, 0); 
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${Math.min(Math.abs(w), Math.abs(bodyH)) * 0.25}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("M", w/2, knobH + bodyH/2);
+            }
+            else if (shape.type === 'text') {
+                ctx.font = `${Math.abs(shape.height) || 20}px Arial`;
+                ctx.fillStyle = shape.color;
+                ctx.fillText(shape.text || "טקסט", 0, 0);
+            }
+
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.translate(state.offsetX, state.offsetY);
+            ctx.scale(state.scale, state.scale);
+            
+            drawGrid(ctx);
+
+            state.shapes.forEach(shape => {
+                drawShape(ctx, shape);
+            });
+
+            if (state.tempShape) {
+                drawShape(ctx, state.tempShape);
+            }
+
+            state.shapes.forEach(shape => shape.drawSelection(ctx));
+
+            ctx.restore();
+            drawRulers();
+        }
+
+        // --- אינטראקציה ---
+
+        function getWorldPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            return {
+                x: (screenX - state.offsetX) / state.scale,
+                y: (screenY - state.offsetY) / state.scale,
+                screenX, screenY
+            };
+        }
+
+        canvas.addEventListener('mousedown', e => {
+            const pos = getWorldPos(e);
+            
+            if (e.button === 2 || e.button === 1 || (state.tool === 'select' && e.ctrlKey)) {
+                state.isPanning = true;
+                state.startDragX = e.clientX - state.offsetX;
+                state.startDragY = e.clientY - state.offsetY;
+                canvas.style.cursor = 'grabbing';
+                return;
+            }
+
+            if (state.tool === 'select') {
+                // בדיקה אם לוחצים על ידית כלשהי (סיבוב)
+                if (state.selectedId) {
+                    const selectedShape = state.shapes.find(s => s.id === state.selectedId);
+                    if (selectedShape && selectedShape.isOverHandle(pos.x, pos.y)) {
+                        state.isRotating = true;
+                        
+                        // חישוב זוויות התחלתיות לסיבוב חלק
+                        const dx = pos.x - selectedShape.x;
+                        const dy = pos.y - selectedShape.y;
+                        state.dragStartAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+                        state.initialRotation = selectedShape.rotation;
+                        return;
+                    }
+                }
+
+                // בדיקת פגיעה משופרת (OBB)
+                let clickedShape = null;
+                for (let i = state.shapes.length - 1; i >= 0; i--) {
+                    if (state.shapes[i].contains(pos.x, pos.y)) {
+                        clickedShape = state.shapes[i];
+                        break;
+                    }
+                }
+
+                if (!clickedShape && !state.isRotating) {
+                    state.shapes.forEach(s => s.selected = false);
+                    state.selectedId = null;
+                    document.getElementById('properties-panel').classList.add('hidden');
+                } else if (clickedShape) {
+                    state.shapes.forEach(s => s.selected = false);
+                    clickedShape.selected = true;
+                    state.selectedId = clickedShape.id;
+                    state.isDragging = true;
+                    state.dragOffsetX = pos.x - clickedShape.x;
+                    state.dragOffsetY = pos.y - clickedShape.y;
+                    showProperties(clickedShape);
+                }
+            } else {
+                state.isDragging = true;
+                state.startX = pos.x;
+                state.startY = pos.y;
+                
+                if (state.tool === 'text') {
+                    const text = prompt("הכנס טקסט:", "טקסט לדוגמה");
+                    if (text) {
+                        const s = new Shape('text', pos.x, pos.y);
+                        s.text = text;
+                        s.height = 24; 
+                        s.fillOpacity = 1; // טקסט תמיד מלא
+                        state.shapes.push(s);
+                        setTool('select');
+                    }
+                    state.isDragging = false;
+                } else {
+                    state.tempShape = new Shape(state.tool, pos.x, pos.y);
+                    if (state.tool === 'gear' || state.tool === 'circle') state.tempShape.width = 1; 
+                }
+            }
+            draw();
+        });
+
+        function rehydrateShapes(plainShapes) {
+            return plainShapes.map(s => {
+                const shape = new Shape(s.type, s.x, s.y, s.color);
+                Object.assign(shape, s);
+                if (shape.scale === undefined) shape.scale = 1;
+                if (shape.depth === undefined) shape.depth = 0;
+                if (shape.fillOpacity === undefined) shape.fillOpacity = 0;
+                return shape;
+            });
+        }
+
+        function saveHistory() {
+            if (state.historyStep < state.history.length - 1) {
+                state.history = state.history.slice(0, state.historyStep + 1);
+            }
+            state.history.push(JSON.stringify(state.shapes));
+            state.historyStep++;
+            if (state.history.length > 50) {
+                state.history.shift();
+                state.historyStep--;
+            }
+        }
+
+        function undo() {
+            if (state.historyStep > 0) {
+                state.historyStep--;
+                const previousState = JSON.parse(state.history[state.historyStep]);
+                state.shapes = rehydrateShapes(previousState);
+                state.selectedId = null; 
+                document.getElementById('properties-panel').classList.add('hidden');
+                draw();
+            }
+        }
+
+        function redo() {
+            if (state.historyStep < state.history.length - 1) {
+                state.historyStep++;
+                const nextState = JSON.parse(state.history[state.historyStep]);
+                state.shapes = rehydrateShapes(nextState);
+                state.selectedId = null;
+                document.getElementById('properties-panel').classList.add('hidden');
+                draw();
+            }
+        }
+
+        function bringToFront() {
+            if (!state.selectedId) return;
+            const idx = state.shapes.findIndex(s => s.id === state.selectedId);
+            if (idx > -1 && idx < state.shapes.length - 1) {
+                const shape = state.shapes.splice(idx, 1)[0];
+                state.shapes.push(shape);
+                saveHistory();
+                draw();
+            }
+        }
+
+        function sendToBack() {
+            if (!state.selectedId) return;
+            const idx = state.shapes.findIndex(s => s.id === state.selectedId);
+            if (idx > 0) {
+                const shape = state.shapes.splice(idx, 1)[0];
+                state.shapes.unshift(shape);
+                saveHistory();
+                draw();
+            }
+        }
+
+        canvas.addEventListener('mousemove', e => {
+            const pos = getWorldPos(e);
+
+            if (state.isPanning) {
+                let newOffsetX = e.clientX - state.startDragX;
+                let newOffsetY = e.clientY - state.startDragY;
+                state.offsetX = Math.min(newOffsetX, 0);
+                state.offsetY = Math.min(newOffsetY, 0);
+                draw();
+                return;
+            }
+
+            if (state.tool === 'select' && state.selectedId && !state.isRotating && !state.isDragging) {
+                const selectedShape = state.shapes.find(s => s.id === state.selectedId);
+                if (selectedShape && selectedShape.isOverHandle(pos.x, pos.y)) {
+                    canvas.style.cursor = 'alias'; 
+                } else {
+                    canvas.style.cursor = 'crosshair';
+                }
+            }
+
+            if (state.isRotating && state.selectedId) {
+                const shape = state.shapes.find(s => s.id === state.selectedId);
+                if (shape) {
+                    const dx = pos.x - shape.x;
+                    const dy = pos.y - shape.y;
+                    const currentAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    const deltaAngle = currentAngle - state.dragStartAngle;
+                    shape.rotation = state.initialRotation + deltaAngle;
+                    
+                    // Update rotation slider UI
+                    document.getElementById('prop-rotation').value = Math.round(shape.rotation % 360);
+                    document.getElementById('val-rotation').innerText = Math.round(shape.rotation % 360) + "°";
+                    
+                    draw();
+                }
+                return;
+            }
+
+            if (state.isDragging) {
+                if (state.tool === 'select' && state.selectedId) {
+                    const shape = state.shapes.find(s => s.id === state.selectedId);
+                    if (shape) {
+                        shape.x = pos.x - state.dragOffsetX;
+                        shape.y = pos.y - state.dragOffsetY;
+                        
+                        // Update Y slider UI
+                        document.getElementById('prop-y').value = Math.round(shape.y);
+                        document.getElementById('val-y').innerText = Math.round(shape.y);
+                    }
+                } else if (state.tempShape) {
+                    const dx = pos.x - state.startX;
+                    const dy = pos.y - state.startY;
+                    
+                    if (state.tool === 'rect' || state.tool === 'pipe' || state.tool === 'weight' || state.tool === 'triangle') {
+                        state.tempShape.width = dx;
+                        state.tempShape.height = dy;
+                    } else if (state.tool === 'circle' || state.tool === 'circle-transparent' || state.tool === 'gear') {
+                        state.tempShape.width = Math.sqrt(dx*dx + dy*dy);
+                    } else if (state.tool === 'line' || state.tool === 'arrow' || state.tool === 'double-arrow') {
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                        const len = Math.sqrt(dx*dx + dy*dy);
+                        state.tempShape.rotation = angle;
+                        state.tempShape.width = len;
+                    }
+                }
+                draw();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            state.isPanning = false;
+            canvas.style.cursor = 'crosshair';
+            
+            if (state.isRotating) {
+                state.isRotating = false;
+                saveHistory();
+                return;
+            }
+
+            if (state.isDragging) {
+                let historyNeeded = false;
+
+                if (state.tempShape) {
+                    if (state.tempShape.type === 'rect' || state.tempShape.type === 'pipe' || state.tempShape.type === 'weight' || state.tempShape.type === 'triangle') {
+                        if (state.tempShape.width < 0) {
+                            state.tempShape.x += state.tempShape.width;
+                            state.tempShape.width = Math.abs(state.tempShape.width);
+                        }
+                        if (state.tempShape.height < 0) {
+                            state.tempShape.y += state.tempShape.height;
+                            state.tempShape.height = Math.abs(state.tempShape.height);
+                        }
+                    }
+                    if (state.tempShape.type === 'pipe' && state.tempShape.height < 10) state.tempShape.height = 20;
+
+                    state.shapes.push(state.tempShape);
+                    state.tempShape = null;
+                    historyNeeded = true;
+                } 
+                else if (state.tool === 'select' && state.selectedId) {
+                    historyNeeded = true;
+                }
+
+                state.isDragging = false;
+                
+                if (historyNeeded) {
+                    saveHistory();
+                }
+
+                draw();
+            }
+        });
+
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const zoomSensitivity = 0.001;
+            const delta = -e.deltaY * zoomSensitivity;
+            const newScale = Math.min(Math.max(0.1, state.scale + delta), 5);
+            
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const worldX = (mouseX - state.offsetX) / state.scale;
+            const worldY = (mouseY - state.offsetY) / state.scale;
+
+            state.scale = newScale;
+
+            state.offsetX = Math.min(mouseX - worldX * state.scale, 0);
+            state.offsetY = Math.min(mouseY - worldY * state.scale, 0);
+
+            updateZoomUI();
+            draw();
+        }, { passive: false });
+
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        function setTool(toolName) {
+            state.tool = toolName;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + toolName).classList.add('active');
+            
+            if (toolName !== 'select') {
+                state.shapes.forEach(s => s.selected = false);
+                state.selectedId = null;
+                document.getElementById('properties-panel').classList.add('hidden');
+                draw();
+            }
+        }
+
+        function setGridOpacity(val) {
+            state.gridOpacity = parseFloat(val);
+            draw();
+        }
+
+        function zoom(delta) {
+            setZoom(parseFloat(state.scale) + delta);
+        }
+
+        function setZoom(val) {
+            state.scale = Math.min(Math.max(0.1, parseFloat(val)), 5);
+            state.offsetX = Math.min(state.offsetX, 0);
+            state.offsetY = Math.min(state.offsetY, 0);
+            
+            updateZoomUI();
+            draw();
+        }
+
+        function updateZoomUI() {
+            document.getElementById('zoom-slider').value = state.scale;
+            document.getElementById('zoom-display').innerText = Math.round(state.scale * 100) + '%';
+        }
+
+        function resetView() {
+            state.scale = 1;
+            state.offsetX = 0;
+            state.offsetY = 0;
+            updateZoomUI();
+            draw();
+        }
+
+        function showProperties(shape) {
+            const panel = document.getElementById('properties-panel');
+            panel.classList.remove('hidden');
+            
+            // עדכון שדות הקלט עם ערכי האלמנט
+            document.getElementById('prop-rotation').value = Math.round(shape.rotation % 360);
+            document.getElementById('val-rotation').innerText = Math.round(shape.rotation % 360) + "°";
+
+            document.getElementById('prop-color').value = shape.color;
+            
+            document.getElementById('prop-scale').value = shape.scale || 1;
+            document.getElementById('val-scale').innerText = (shape.scale || 1).toFixed(1);
+            
+            document.getElementById('prop-y').value = Math.round(shape.y);
+            document.getElementById('val-y').innerText = Math.round(shape.y);
+            
+            document.getElementById('prop-depth').value = shape.depth || 0;
+            document.getElementById('val-depth').innerText = shape.depth || 0;
+
+            document.getElementById('prop-opacity').value = shape.fillOpacity || 0;
+            document.getElementById('val-opacity').innerText = Math.round((shape.fillOpacity || 0) * 100) + "%";
+        }
+
+        function updateSelectedProp(prop, value) {
+            if (!state.selectedId) return;
+            const shape = state.shapes.find(s => s.id === state.selectedId);
+            if (shape) {
+                if (prop === 'rotation') {
+                    shape.rotation = parseFloat(value);
+                    document.getElementById('val-rotation').innerText = value + "°";
+                }
+                if (prop === 'color') shape.color = value;
+                if (prop === 'scale') {
+                    shape.scale = parseFloat(value);
+                    document.getElementById('val-scale').innerText = parseFloat(value).toFixed(1);
+                }
+                if (prop === 'y') {
+                    shape.y = parseFloat(value);
+                    document.getElementById('val-y').innerText = value;
+                }
+                if (prop === 'depth') {
+                    shape.depth = parseFloat(value);
+                    document.getElementById('val-depth').innerText = value;
+                }
+                if (prop === 'opacity') {
+                    shape.fillOpacity = parseFloat(value);
+                    document.getElementById('val-opacity').innerText = Math.round(value * 100) + "%";
+                }
+                
+                saveHistory(); 
+                draw();
+            }
+        }
+
+        function deleteSelected() {
+            if (state.selectedId) {
+                state.shapes = state.shapes.filter(s => s.id !== state.selectedId);
+                state.selectedId = null;
+                document.getElementById('properties-panel').classList.add('hidden');
+                saveHistory(); 
+                draw();
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                deleteSelected();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        });
+
+        function saveProject() {
+            const currentHtml = document.documentElement.outerHTML;
+            const dataString = JSON.stringify(state.shapes);
+            const newHtml = currentHtml.replace(/const savedData = .*?;/, `const savedData = ${dataString};`);
+            
+            const blob = new Blob([newHtml], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mechanical_sketch.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function saveDocx() {
+            // 1. קבלת התמונה מהקנבס
+            // נשמור את מצב הבחירה הנוכחי
+            const originalSelection = state.selectedId;
+            // נבטל בחירה כדי שלא יראו את המסגרת הכחולה בתמונה
+            state.shapes.forEach(s => s.selected = false);
+            draw();
+
+            const dataUrl = canvas.toDataURL('image/png');
+
+            // נחזיר את הבחירה
+            if (originalSelection) {
+                const s = state.shapes.find(sh => sh.id === originalSelection);
+                if (s) s.selected = true;
+            }
+            draw();
+            
+            // 2. יצירת מסמך DOCX
+            const { Document, Packer, Paragraph, ImageRun, TextRun, AlignmentType } = docx;
+            
+            // המרה ל-Blob כדי להתמודד עם מגבלות גודל מחרוזת בדפדפנים מסוימים
+            fetch(dataUrl).then(res => res.blob()).then(blob => {
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    const base64data = reader.result;
+                    
+                    const doc = new Document({
+                        sections: [{
+                            properties: {},
+                            children: [
+                                new Paragraph({
+                                    children: [
+                                        new TextRun({
+                                            text: "שרטוט הנדסי - ייצוא",
+                                            bold: true,
+                                            size: 32, // 16pt
+                                            font: "Arial"
+                                        }),
+                                    ],
+                                    alignment: AlignmentType.CENTER,
+                                    spacing: { after: 200 }
+                                }),
+                                new Paragraph({
+                                    children: [
+                                        new ImageRun({
+                                            data: base64data,
+                                            transformation: {
+                                                width: 600,
+                                                height: 400 * (canvas.height / canvas.width) // שמירה על יחס גובה-רוחב
+                                            }
+                                        })
+                                    ],
+                                    alignment: AlignmentType.CENTER
+                                }),
+                                new Paragraph({
+                                    children: [
+                                        new TextRun({
+                                            text: "נוצר באמצעות מערכת שרטוט מכונות - איתי בן טל",
+                                            size: 20, // 10pt
+                                            color: "888888"
+                                        })
+                                    ],
+                                    alignment: AlignmentType.CENTER,
+                                    spacing: { before: 200 }
+                                })
+                            ]
+                        }]
+                    });
+
+                    // 3. שמירה והורדה
+                    Packer.toBlob(doc).then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        document.body.appendChild(a);
+                        a.style = "display: none";
+                        a.href = url;
+                        a.download = "sketch.docx";
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    });
+                };
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        resize();
+        resetView();
+        saveHistory();
+
+    </script>
+</body>
+</html>
