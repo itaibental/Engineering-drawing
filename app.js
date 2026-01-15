@@ -53,6 +53,10 @@ let state = {
     shapes: [],
     selectedId: null,
     tempShape: null,
+    
+    // העתק הדבק
+    clipboard: null,
+
     // היסטוריה
     history: [],
     historyStep: -1
@@ -491,6 +495,44 @@ function redo() {
     }
 }
 
+// Copy & Paste Logic
+function copySelected() {
+    if (state.selectedId) {
+        const shape = state.shapes.find(s => s.id === state.selectedId);
+        if (shape) {
+            state.clipboard = JSON.stringify(shape);
+        }
+    }
+}
+
+function pasteShape() {
+    if (!state.clipboard) return;
+    try {
+        const data = JSON.parse(state.clipboard);
+        // Create new shape instance based on data
+        const newShape = new Shape(data.type, data.x, data.y, data.color);
+        Object.assign(newShape, data);
+        
+        // Generate new properties for copy
+        newShape.id = Date.now() + Math.random();
+        newShape.x += 20 / state.scale; // Offset relative to scale so it's visible
+        newShape.y += 20 / state.scale;
+        newShape.selected = true;
+
+        // Deselect current
+        state.shapes.forEach(s => s.selected = false);
+        
+        state.shapes.push(newShape);
+        state.selectedId = newShape.id;
+        
+        showProperties(newShape);
+        saveHistory();
+        draw();
+    } catch (e) {
+        console.error("Paste failed", e);
+    }
+}
+
 function getWorldPos(e) {
     const rect = canvas.getBoundingClientRect();
     const screenX = e.clientX - rect.left;
@@ -718,6 +760,26 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+window.addEventListener('keydown', e => {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        deleteSelected();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        redo();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        copySelected();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        pasteShape();
+    }
+});
 
 // --- אתחול ---
 resize();
