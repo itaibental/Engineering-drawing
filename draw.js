@@ -197,7 +197,6 @@ function drawShape(ctx, shape) {
     else if (shape.type === 'ellipse') {
         ctx.fillStyle = fillColor;
         ctx.beginPath();
-        // width ו-height משמשים כקוטר או צירים ראשיים. ellipse מצפה לרדיוס.
         ctx.ellipse(0, 0, Math.abs(shape.width)/2, Math.abs(shape.height)/2, 0, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
@@ -239,7 +238,6 @@ function drawShape(ctx, shape) {
         ctx.moveTo(0, 0);
         ctx.lineTo(shape.width, 0);
         ctx.stroke();
-        // ראש חץ
         ctx.beginPath();
         ctx.moveTo(shape.width, 0);
         ctx.lineTo(shape.width - 10, -5);
@@ -253,14 +251,12 @@ function drawShape(ctx, shape) {
         ctx.lineTo(shape.width, 0);
         ctx.stroke();
         
-        // ראש חץ ימני
         ctx.beginPath();
         ctx.moveTo(shape.width, 0);
         ctx.lineTo(shape.width - 10, -5);
         ctx.lineTo(shape.width - 10, 5);
         ctx.fill();
 
-        // ראש חץ שמאלי
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(10, -5);
@@ -373,27 +369,23 @@ function drawShape(ctx, shape) {
     // --- רכיבים מיוחדים (ספרייה) ---
     else if (shape.type === 'chair') {
         ctx.fillStyle = fillColor || 'none';
-        // מושב
         ctx.strokeRect(0, 0, shape.width, shape.width);
         if (fillColor) ctx.fillRect(0, 0, shape.width, shape.width);
-        // משענת
         ctx.strokeRect(0, -10, shape.width, 10);
         if (fillColor) ctx.fillRect(0, -10, shape.width, 10);
-        // ידיות
         ctx.beginPath();
         ctx.moveTo(0, 0); ctx.lineTo(0, shape.width/2);
         ctx.moveTo(shape.width, 0); ctx.lineTo(shape.width, shape.width/2);
         ctx.stroke();
     }
     else if (shape.type === 'window') {
-        ctx.strokeRect(0, 0, shape.width, 20); // מסגרת קיר
+        ctx.strokeRect(0, 0, shape.width, 20); 
         ctx.beginPath();
-        ctx.moveTo(0, 10); ctx.lineTo(shape.width, 10); // זכוכית
-        ctx.moveTo(shape.width/2, 0); ctx.lineTo(shape.width/2, 20); // חוצץ
+        ctx.moveTo(0, 10); ctx.lineTo(shape.width, 10); 
+        ctx.moveTo(shape.width/2, 0); ctx.lineTo(shape.width/2, 20); 
         ctx.stroke();
     }
     else if (shape.type === 'door') {
-        // קשת דלת
         ctx.beginPath();
         ctx.moveTo(0, shape.width);
         ctx.lineTo(0, 0);
@@ -401,25 +393,22 @@ function drawShape(ctx, shape) {
         ctx.stroke();
     }
     else if (shape.type === 'headphones') {
-        // קשת ראש
         ctx.beginPath();
         ctx.arc(shape.width/2, shape.height/2, shape.width/2, Math.PI, 0);
         ctx.stroke();
-        // אוזניות
         ctx.fillStyle = shape.color;
         ctx.fillRect(0, shape.height/2 - 10, 10, 20);
         ctx.fillRect(shape.width-10, shape.height/2 - 10, 10, 20);
     }
     else if (shape.type === 'mixer') {
         ctx.strokeRect(0, 0, shape.width, shape.height);
-        // סליידרים מדומים
         for(let i=1; i<4; i++) {
             let x = (shape.width/4)*i;
             ctx.beginPath();
             ctx.moveTo(x, 10); ctx.lineTo(x, shape.height-10);
             ctx.stroke();
             ctx.fillStyle = shape.color;
-            ctx.fillRect(x-5, shape.height/2, 10, 10); // כפתור
+            ctx.fillRect(x-5, shape.height/2, 10, 10); 
         }
     }
     else if (shape.type === 'cable') {
@@ -429,24 +418,20 @@ function drawShape(ctx, shape) {
         ctx.stroke();
     }
     else if (shape.type === 'mic') {
-        // ראש
         ctx.beginPath();
         ctx.arc(10, 10, 10, 0, Math.PI*2);
         ctx.stroke();
-        // גוף
         ctx.strokeRect(5, 20, 10, 30);
     }
     else if (shape.type === 'camera') {
-        ctx.strokeRect(0, 10, shape.width, shape.height-10); // גוף
+        ctx.strokeRect(0, 10, shape.width, shape.height-10); 
         ctx.beginPath();
-        ctx.arc(shape.width/2, (shape.height-10)/2 + 10, (shape.height-10)/3, 0, Math.PI*2); // עדשה
+        ctx.arc(shape.width/2, (shape.height-10)/2 + 10, (shape.height-10)/3, 0, Math.PI*2); 
         ctx.stroke();
-        ctx.strokeRect(shape.width - 20, 0, 10, 10); // כפתור/פלאש
+        ctx.strokeRect(shape.width - 20, 0, 10, 10); 
     }
     else if (shape.type === 'flashlight') {
-         // ידית
         ctx.strokeRect(0, shape.height/4, shape.width*0.6, shape.height/2);
-        // ראש
         ctx.beginPath();
         ctx.moveTo(shape.width*0.6, shape.height/4);
         ctx.lineTo(shape.width, 0);
@@ -456,13 +441,11 @@ function drawShape(ctx, shape) {
         ctx.stroke();
     }
     else if (shape.type === 'tripod') {
-        // ראש
         ctx.strokeRect(shape.width/2 - 5, 0, 10, 10);
-        // רגליים
         ctx.beginPath();
-        ctx.moveTo(shape.width/2, 10); ctx.lineTo(shape.width/2, shape.height); // מרכז
-        ctx.moveTo(shape.width/2, 10); ctx.lineTo(0, shape.height); // שמאל
-        ctx.moveTo(shape.width/2, 10); ctx.lineTo(shape.width, shape.height); // ימין
+        ctx.moveTo(shape.width/2, 10); ctx.lineTo(shape.width/2, shape.height); 
+        ctx.moveTo(shape.width/2, 10); ctx.lineTo(0, shape.height); 
+        ctx.moveTo(shape.width/2, 10); ctx.lineTo(shape.width, shape.height); 
         ctx.stroke();
     }
 
