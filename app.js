@@ -3,7 +3,7 @@ const LOGIN_KEY = 'sartetoni_login_ts';
 const SESSION_TIMEOUT = 15 * 60 * 1000;
 
 // בדיקה אוטומטית בעת טעינת הדף - האם המשתמש מחובר?
-(function checkSession() {
+document.addEventListener('DOMContentLoaded', () => {
     const lastLogin = localStorage.getItem(LOGIN_KEY);
     if (lastLogin) {
         const now = Date.now();
@@ -18,7 +18,7 @@ const SESSION_TIMEOUT = 15 * 60 * 1000;
             localStorage.removeItem(LOGIN_KEY);
         }
     }
-})();
+});
 
 // לוגיקת כניסה
 function validateLogin() {
