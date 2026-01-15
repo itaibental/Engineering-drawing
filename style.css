@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
+        
+body {
+    font-family: 'Assistant', sans-serif;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    user-select: none; /* מניעת בחירת טקסט בזמן גרירה */
+}
+
+#canvas-container {
+    cursor: crosshair;
+    background-color: #ffffff;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+}
+
+.tool-btn {
+    transition: all 0.2s;
+}
+.tool-btn.active {
+    background-color: #3b82f6; /* blue-500 */
+    color: white;
+    border-color: #2563eb;
+}
+
+/* סרגל עליון ושמאלי */
+.ruler-x { height: 20px; background: #e5e7eb; position: relative; overflow: hidden; }
+.ruler-y { width: 20px; background: #e5e7eb; position: relative; overflow: hidden; }
+
+.prop-input {
+    background: #374151;
+    border: 1px solid #4b5563;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 4px;
+    width: 100%;
+}
+
+/* עיצוב סליידרים */
+input[type=range] {
+    height: 4px;
+    border-radius: 2px;
+    background: #4b5563;
+    outline: none;
+    accent-color: #3b82f6;
+}
+
+/* עיצוב Select */
+select.dark-select {
+    background-color: #374151;
+    color: white;
+    border: 1px solid #4b5563;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    width: 100%;
+    font-size: 0.875rem;
+}
