@@ -14,7 +14,7 @@
 </head>
 <body class="flex h-screen text-gray-800">
 
-    <!-- חלון כניסה -->
+    <!-- חלון כניסה (Login Overlay) -->
     <div id="login-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md w-full border-t-4 border-blue-500">
             <div class="mb-6">
@@ -47,7 +47,7 @@
     <div class="w-64 bg-gray-800 text-white flex flex-col border-l border-gray-700 shadow-xl z-10 overflow-y-auto">
         <div class="p-4 border-b border-gray-700 bg-gray-900">
             <h1 class="text-xl font-bold text-blue-400">שרטטוני</h1>
-            <p class="text-xs text-gray-400 mt-1">גרסה 3.3</p>
+            <p class="text-xs text-gray-400 mt-1">גרסה 3.5 (קבצים נפרדים)</p>
         </div>
 
         <!-- כלים ראשיים -->
@@ -64,16 +64,14 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/></svg>
                 <span class="text-xs mt-1">משולש</span>
             </button>
-            <!-- משולש ישר זווית -->
             <button onclick="setTool('right-triangle')" id="btn-right-triangle" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16L4 4z"/></svg>
-                <span class="text-xs mt-1 text-center leading-tight">משולש ישר זווית</span>
+                <span class="text-xs mt-1 text-center leading-tight">ישר זווית</span>
             </button>
             <button onclick="setTool('circle')" id="btn-circle" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
                 <span class="text-xs mt-1">עיגול</span>
             </button>
-            <!-- אליפסה -->
             <button onclick="setTool('ellipse')" id="btn-ellipse" class="tool-btn flex flex-col items-center justify-center p-2 rounded border border-gray-600 hover:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="6"/></svg>
                 <span class="text-xs mt-1">אליפסה</span>
@@ -117,7 +115,7 @@
             </button>
         </div>
 
-        <!-- ספריית רכיבים (חדש) -->
+        <!-- ספריית רכיבים -->
         <div class="p-4 border-b border-gray-700">
             <label class="text-xs font-bold text-gray-300 mb-2 block">ספריית רכיבים</label>
             <select id="component-library" onchange="addComponent(this.value)" class="dark-select cursor-pointer">
@@ -328,9 +326,12 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- סדר טעינה חשוב! -->
+    <!-- 1. מחלקות הצורות -->
     <script src="shapes.js"></script>
+    <!-- 2. פונקציות הציור -->
     <script src="draw.js"></script>
+    <!-- 3. הלוגיקה הראשית והאתחול -->
     <script src="app.js"></script>
 
 </body>
