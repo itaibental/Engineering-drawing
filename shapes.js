@@ -31,7 +31,10 @@ class Shape {
             } else if (this.type === 'circle' || this.type === 'gear' || this.type === 'compass') {
                 bx = -w; by = -w; bw = w * 2; bh = w * 2;
             } else {
-                // אייקונים מיוחדים - ברירת מחדל מצוירים מ-0,0
+                // אייקונים מיוחדים - נניח ש-width/height הם הקופסה המלאה וציירנו ממרכז או פינה?
+                // בציור למטה, אייקונים מצוירים ממרכז בדרך כלל או 0,0. נבדוק ב-drawShape.
+                // לצורך פשטות נניח שהם 0,0 עד w,h אלא אם כן צוין אחרת.
+                // נבדוק מימוש ספציפי בהמשך. ברירת מחדל:
                 bx = 0; by = 0; bw = w; bh = h;
             }
         } 
@@ -39,12 +42,10 @@ class Shape {
             by = -h; 
         } 
         else if (this.type === 'line' || this.type === 'line-dashed' || this.type === 'arrow' || this.type === 'double-arrow') {
-            // קווים דקים מקבלים שטח תפיסה מעובה
-            // מכיוון שאנו עובדים עם מערכת קואורדינטות, נרצה שה-bounding box יכסה את הקו
-            // כאן זה חישוב פשוט לצרכי ציור המסגרת
             by = -5 * this.scale / state.scale;
             bh = 10 * this.scale / state.scale;
         }
+        // משולש, מלבן ושאר הצורות משתמשות בברירת המחדל (0,0)
         return {bx, by, bw, bh};
     }
 
@@ -62,7 +63,6 @@ class Shape {
         
         ctx.strokeRect(bx - 5/state.scale, by - 5/state.scale, bw + 10/state.scale, bh + 10/state.scale);
         
-        // ידית סיבוב עליונה
         let handleX = bx + bw/2;
         let handleY = by - 5/state.scale;
         ctx.setLineDash([]);
@@ -75,7 +75,6 @@ class Shape {
         ctx.arc(handleX, handleY - 20/state.scale, 4/state.scale, 0, Math.PI * 2);
         ctx.fill();
 
-        // ידיות פינתיות לסיבוב
         const cornerRadius = 4 / state.scale;
         const corners = [
             {x: bx - 5/state.scale, y: by - 5/state.scale},
@@ -155,7 +154,7 @@ class Shape {
             return (lx*lx)/(a*a) + (ly*ly)/(b*b) <= 1;
         }
         else if (this.type === 'rect' || this.type === 'pipe' || this.type === 'weight' || this.type === 'triangle' || this.type === 'right-triangle') {
-            // עבור רוב הצורות המרובעות והמשולשות, נשתמש ב-AABB (מסגרת) לנוחות
+            // למרות שמשולש הוא לא מלבן, AABB מספיק טוב לרוב, או שנוכל לדייק
             return (lx >= -tolerance && lx <= w + tolerance && ly >= -tolerance && ly <= h + tolerance);
         }
         else if (this.type === 'text') {
