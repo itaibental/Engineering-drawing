@@ -1,3 +1,25 @@
+// קבועים לניהול זמן התחברות (15 דקות)
+const LOGIN_KEY = 'sartetoni_login_ts';
+const SESSION_TIMEOUT = 15 * 60 * 1000;
+
+// בדיקה אוטומטית בעת טעינת הדף - האם המשתמש מחובר?
+(function checkSession() {
+    const lastLogin = localStorage.getItem(LOGIN_KEY);
+    if (lastLogin) {
+        const now = Date.now();
+        // בדיקה אם עברו פחות מ-15 דקות
+        if (now - parseInt(lastLogin) < SESSION_TIMEOUT) {
+            const overlay = document.getElementById('login-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
+        } else {
+            // פג תוקף - מחיקת הרישום
+            localStorage.removeItem(LOGIN_KEY);
+        }
+    }
+})();
+
 // לוגיקת כניסה
 function validateLogin() {
     const input = document.getElementById('access-code');
@@ -5,6 +27,9 @@ function validateLogin() {
     const code = input.value.trim().toUpperCase();
     
     if (code === 'TAMAR.K' || code === 'IBT1234') {
+        // שמירת זמן ההתחברות הנוכחי
+        localStorage.setItem(LOGIN_KEY, Date.now().toString());
+        
         document.getElementById('login-overlay').classList.add('hidden');
     } else {
         errorMsg.classList.remove('hidden');
