@@ -18,23 +18,21 @@ class Shape {
     // חישוב גבולות עבור לוגיקה מקומית (bounding box)
     getBounds() {
         // התחשבות ב-SCALE
+        // הערה: משתמשים ב-state הגלובלי שמוגדר ב-app.js
+        // בגלל ההפרדה לקבצים, וודא ש-app.js נטען, או ש-state מוגדר במרחב הגלובלי.
+        // נשתמש בגישה פשוטה: state חייב להיות מוגדר לפני הקריאה לפונקציות אלו.
+        
         let w = this.width * this.scale;
         let h = this.height * this.scale;
         
         let bx = 0, by = 0, bw = w, bh = h;
         
-        // רכיבים מיוחדים ועיגולים שממורכזים
         if (['circle', 'gear', 'compass', 'ellipse', 'chair', 'headphones', 'mixer', 'mic', 'camera', 'flashlight', 'tripod'].includes(this.type)) {
-            // לחלקם מרכז ב-0,0 ורוחב הוא רדיוס/חצי
             if (this.type === 'ellipse') {
                 bx = -w/2; by = -h/2; bw = w; bh = h;
             } else if (this.type === 'circle' || this.type === 'gear' || this.type === 'compass') {
                 bx = -w; by = -w; bw = w * 2; bh = w * 2;
             } else {
-                // אייקונים מיוחדים - נניח ש-width/height הם הקופסה המלאה וציירנו ממרכז או פינה?
-                // בציור למטה, אייקונים מצוירים ממרכז בדרך כלל או 0,0. נבדוק ב-drawShape.
-                // לצורך פשטות נניח שהם 0,0 עד w,h אלא אם כן צוין אחרת.
-                // נבדוק מימוש ספציפי בהמשך. ברירת מחדל:
                 bx = 0; by = 0; bw = w; bh = h;
             }
         } 
@@ -42,10 +40,11 @@ class Shape {
             by = -h; 
         } 
         else if (this.type === 'line' || this.type === 'line-dashed' || this.type === 'arrow' || this.type === 'double-arrow') {
-            by = -5 * this.scale / state.scale;
-            bh = 10 * this.scale / state.scale;
+            // גישה בטוחה למקרה ש-state עדיין לא אותחל
+            const currentScale = (typeof state !== 'undefined' && state.scale) ? state.scale : 1;
+            by = -5 * this.scale / currentScale;
+            bh = 10 * this.scale / currentScale;
         }
-        // משולש, מלבן ושאר הצורות משתמשות בברירת המחדל (0,0)
         return {bx, by, bw, bh};
     }
 
@@ -56,36 +55,37 @@ class Shape {
         ctx.rotate(this.rotation * Math.PI / 180);
         
         const {bx, by, bw, bh} = this.getBounds();
+        const currentScale = (typeof state !== 'undefined' && state.scale) ? state.scale : 1;
 
         ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2 / state.scale;
-        ctx.setLineDash([5 / state.scale, 5 / state.scale]);
+        ctx.lineWidth = 2 / currentScale;
+        ctx.setLineDash([5 / currentScale, 5 / currentScale]);
         
-        ctx.strokeRect(bx - 5/state.scale, by - 5/state.scale, bw + 10/state.scale, bh + 10/state.scale);
+        ctx.strokeRect(bx - 5/currentScale, by - 5/currentScale, bw + 10/currentScale, bh + 10/currentScale);
         
         let handleX = bx + bw/2;
-        let handleY = by - 5/state.scale;
+        let handleY = by - 5/currentScale;
         ctx.setLineDash([]);
         ctx.beginPath();
         ctx.moveTo(handleX, handleY);
-        ctx.lineTo(handleX, handleY - 20/state.scale);
+        ctx.lineTo(handleX, handleY - 20/currentScale);
         ctx.stroke();
         ctx.beginPath();
         ctx.fillStyle = '#3b82f6';
-        ctx.arc(handleX, handleY - 20/state.scale, 4/state.scale, 0, Math.PI * 2);
+        ctx.arc(handleX, handleY - 20/currentScale, 4/currentScale, 0, Math.PI * 2);
         ctx.fill();
 
-        const cornerRadius = 4 / state.scale;
+        const cornerRadius = 4 / currentScale;
         const corners = [
-            {x: bx - 5/state.scale, y: by - 5/state.scale},
-            {x: bx + bw + 5/state.scale, y: by - 5/state.scale},
-            {x: bx + bw + 5/state.scale, y: by + bh + 5/state.scale},
-            {x: bx - 5/state.scale, y: by + bh + 5/state.scale}
+            {x: bx - 5/currentScale, y: by - 5/currentScale},
+            {x: bx + bw + 5/currentScale, y: by - 5/currentScale},
+            {x: bx + bw + 5/currentScale, y: by + bh + 5/currentScale},
+            {x: bx - 5/currentScale, y: by + bh + 5/currentScale}
         ];
 
         ctx.fillStyle = '#ffffff';
         ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 1.5 / state.scale;
+        ctx.lineWidth = 1.5 / currentScale;
         
         corners.forEach(corner => {
             ctx.beginPath();
@@ -107,17 +107,18 @@ class Shape {
         const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
 
         const {bx, by, bw, bh} = this.getBounds();
-        const hitRadius = 8 / state.scale;
+        const currentScale = (typeof state !== 'undefined' && state.scale) ? state.scale : 1;
+        const hitRadius = 8 / currentScale;
 
         const topHandleX = bx + bw/2;
-        const topHandleY = (by - 5/state.scale) - 20/state.scale;
+        const topHandleY = (by - 5/currentScale) - 20/currentScale;
         if (Math.hypot(localX - topHandleX, localY - topHandleY) < hitRadius) return true;
 
         const corners = [
-            {x: bx - 5/state.scale, y: by - 5/state.scale},
-            {x: bx + bw + 5/state.scale, y: by - 5/state.scale},
-            {x: bx + bw + 5/state.scale, y: by + bh + 5/state.scale},
-            {x: bx - 5/state.scale, y: by + bh + 5/state.scale}
+            {x: bx - 5/currentScale, y: by - 5/currentScale},
+            {x: bx + bw + 5/currentScale, y: by - 5/currentScale},
+            {x: bx + bw + 5/currentScale, y: by + bh + 5/currentScale},
+            {x: bx - 5/currentScale, y: by + bh + 5/currentScale}
         ];
 
         for (let corner of corners) {
@@ -135,37 +136,37 @@ class Shape {
         const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
         const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
 
-        const tolerance = 10 / state.scale;
+        const currentScale = (typeof state !== 'undefined' && state.scale) ? state.scale : 1;
+        const tolerance = 10 / currentScale;
         
         const s = this.scale;
         const w = this.width * s;
         const h = this.height * s;
 
-        // בדיקות פגיעה לפי סוג
         if (this.type === 'circle' || this.type === 'gear' || this.type === 'compass') {
             return Math.sqrt(lx*lx + ly*ly) <= Math.abs(w) + tolerance;
         } 
         else if (this.type === 'ellipse') {
-            // משוואת אליפסה: x^2/a^2 + y^2/b^2 <= 1
-            // w/2 = a, h/2 = b
             const a = w/2 + tolerance; 
             const b = h/2 + tolerance;
             if (a === 0 || b === 0) return false;
             return (lx*lx)/(a*a) + (ly*ly)/(b*b) <= 1;
         }
         else if (this.type === 'rect' || this.type === 'pipe' || this.type === 'weight' || this.type === 'triangle' || this.type === 'right-triangle') {
-            // למרות שמשולש הוא לא מלבן, AABB מספיק טוב לרוב, או שנוכל לדייק
             return (lx >= -tolerance && lx <= w + tolerance && ly >= -tolerance && ly <= h + tolerance);
         }
         else if (this.type === 'text') {
-            ctx.font = `${Math.abs(h)}px Arial`;
-            const textW = ctx.measureText(this.text || "טקסט").width;
-            return (lx >= -tolerance && lx <= textW + tolerance && ly >= -h - tolerance && ly <= tolerance);
+            // שים לב: כאן אין גישה ל-ctx אלא אם נעביר אותו. נשתמש בהערכה גסה אם אין
+            // בפועל הקריאה ל-contains נעשית ב-app.js שם יש ctx, אבל המחלקה מופרדת.
+            // לפתרון פשוט: נניח רוחב ממוצע אם אין מדידה מדויקת או נסתמך על app.js שיספק.
+            // לצורך הדוגמה, נשתמש בחישוב מקורב לפי מספר תווים.
+            const charWidth = Math.abs(h) * 0.6;
+            const estimatedWidth = (this.text || "טקסט").length * charWidth;
+            return (lx >= -tolerance && lx <= estimatedWidth + tolerance && ly >= -h - tolerance && ly <= tolerance);
         }
         else if (this.type === 'line' || this.type === 'line-dashed' || this.type === 'arrow' || this.type === 'double-arrow') {
             return (lx >= -tolerance && lx <= w + tolerance && Math.abs(ly) <= tolerance);
         }
-        // ברירת מחדל לאייקונים (0,0 עד w,h)
         return (lx >= -tolerance && lx <= w + tolerance && ly >= -tolerance && ly <= h + tolerance);
     }
 }
